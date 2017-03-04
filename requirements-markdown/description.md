@@ -20,18 +20,18 @@ the information being transmitted.
 The server will have the following capabilities:
   1. Create channels
 	  * Those server will be able to create channels that clients can
-		connect to and users can chat in.
-	2. Monitor channels
+	  connect to and users can chat in.
+  2. Monitor channels
 	  * The server will be able to connect to all channels and see the messages
-		that have been transmitted, and the users that are currently connected
-	3. Delete channels
+	  that have been transmitted, and the users that are currently connected
+  3. Delete channels
 	  * The server will be able to remove channels 
   4. Host clients
 	  * Clients will be able to connect to the server and access different 
-		channels on the server
-	5. Send/Receive messages
+	  channels on the server
+  5. Send/Receive messages
 	  * The server will be able to send messages to all clients accessing a
-		channel, and receive messages from clients on any channel
+	  channel, and receive messages from clients on any channel
 	
 ## User Characteristics
 
