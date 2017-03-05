@@ -37,10 +37,9 @@ Types of readers are described as follows.
 ## Scope of the Product
 Truthfully, the intention of this project is to get an A in software engineerings. But I actually have to put something here, so.
 
-Camelot, ideally, would be a more simple and intuitive version of an IRC (Internet Relay Chat). The JSON-based framework would also be more familiar to most people. Overall, this would be a server with eloquent APIs and an easy to use interface.
-
+There is an expectation at the end of the development lifecycle to open source this server. After open sourcing, the server team hopes that Camelot will serve as a model for server-side programming. Because the JSON-based framework would be familiar to people, the team hopes for a some market adoption. Overall, this would be a good model for how a simple server would be maintained.
 
 ## Business Case for the Product
-
+There is a real pandemic: there are not enough chat applications. Sure, there's [Messenger](https://www.messenger.com), [Slack](https://slack.com/), [Skype](https://www.skype.com/en/), [Viber](https://www.viber.com/en/), [WeChat](https://web.wechat.com), [WhatsApp](https://www.whatsapp.com), [Line](https://line.me/en/), [GroupMe](https://web.groupme.com), [Snapchat](https://www.snapchat.com), [Voxer](http://voxer.com), but their garbage. The market needs a great server to tackle on these giants, and Camelot will do that.
 
 ## Overview of the Requirements Document
