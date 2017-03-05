@@ -47,7 +47,7 @@ with parsing JSON.
 For the constraints of our server, we didn't have any specific constraints as
 to what IDE each person used or the platform that they developed on. The only
 specific constraints that we have so far is that the server is going to be
-developed with the python Camelot Server Project and also that each person
+developed with Python3 using JSON for data transfer and also that each person
 use Git for collaborating on the development of the server. We have not run
 into any issues with making our server compatible with other software as of yet.
 
