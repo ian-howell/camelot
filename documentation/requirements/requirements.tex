@@ -2,40 +2,26 @@
 
 \input{assets/packages}
 \input{assets/headers}
-
 \input{assets/macros}
+
+\makeglossaries
+\input{glossary}
+\renewcommand{\glossarysection}[2][]{}
 
 \begin{document}
 \input{assets/titlepage}
 
 \tableofcontents
+\clearpage
 
-\chapter{Introduction}
-\section{Purpose}
-\section{How to Use This Document}
-\subsection{Types of Reader}
-\subsection{Technical Background Required}
-\subsection{Overview Sections}
-\section{Scope of the Product}
-\section{Business Case for the Product}
-\section{Overview of the Requirements Document}
+\input{introduction}
+\input{description}
+\input{specific-requirements}
+\input{references}
 
-\chapter{Description}
-\section{Product Perspective}
-\section{Product Functions}
-\section{User Characteristics}
-\section{General Constraints}
-\section{Assumptions and Dependencies}
-
-\chapter{Specific Requirements}
-\section{User Requirements}
-\section{System Requirements}
-\section{Interface Requirements}
-
-\chapter{Appendices}
 \chapter{Glossary}
-\chapter{References}
+\printglossary
 
-
+% \chapter{Appendices}
 
 \end{document}
