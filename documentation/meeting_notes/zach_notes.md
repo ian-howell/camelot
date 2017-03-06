@@ -1,6 +1,6 @@
 ## User Authentication & Login
 
-<mark>NOTE</mark>: Do we want users to be able to create accounts first and then
+&#x1F534;NOTE: Do we want users to be able to create accounts first and then
 login, or just do it one step? Doing it one step will make it harder for the
 client (and user) to see why exactly they couldn't login (less user-friendly).
 Was it because they entered the wrong password or because they were trying to
@@ -46,7 +46,7 @@ may add the option for users to create channels.
 ### Channel Deletion
 The server will have the option of deleting specific channels.
 
-<mark>NOTE</mark>: How do we intend to implement this? Would the server have to
+&#x1F534;NOTE: How do we intend to implement this? Would the server have to
 be taken down or could it be interrupted while running? What kind of errors
 could occur with interrupting the server?
 
@@ -78,7 +78,7 @@ something like this:
     ]
 }
 </code></pre>
-<mark>NOTE</mark>: Would there be any reason a user would run into an error
+&#x1F534;NOTE: Would there be any reason a user would run into an error
 with joining channels? Is there a limit on the number of users in each channel?
 Do we need to send back some kind of bool value notifying the client if the
 user had successfully joined the channels?
@@ -87,7 +87,7 @@ After the user successfully joins the channels, the specified user will have
 access to the channels that they decided to join.
 
 ### Joining Channels after selecting initial channels to join
-<mark>NOTE:</mark> Is this something we want? Are users going to be restricted to
+&#x1F534;NOTE: Is this something we want? Are users going to be restricted to
 the initial channels that they join?
 
 ### Send/Receive Messages
