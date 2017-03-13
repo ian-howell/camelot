@@ -21,7 +21,7 @@ Users will be able to create accounts by submitting a username that hasn't been 
     },
         "create_account": {
         "username": "some username",
-            "password": "some password",
+        "password": "some password",
         "server_password": "some server password"
     }
 }
@@ -108,6 +108,9 @@ access to the channels that they decided to join.
 \subsubsection{Joining Channels After Selecting Initial Channels to Join}
 Users will have the option to list the channels when logged in. They will be able to join channels in the same fashion as they did initially\footnote{Later on, the user will have the option to leave channels.}.
 
+\subsection{Send/Receive Messages}
+Whenever the server receives notice that a new message has been posted to a given channel, the server will send out a message to each user who is connected to that given channel. The message will be a \gls{json} file that looks something like this:
+
 \begin{lstlisting}[style=json]
 {
     "tags": {
@@ -139,9 +142,6 @@ When a user (client) wishes to send a message to a certain channel, the \gls{jso
 \end{lstlisting}
 
 Notice that both the \gls{json} file being received by the client and the \gls{json} being sent out by the server look exactly the same. This is done so that the server can simply broadcast messages to all users without having to decode a \gls{json} file server side. This will give the least amount of delay in messages being sent out to each user. Also, the user that sends the message out will also receive the message. It's up to the client in how they want to approach this situation.
-
-\subsection{Send/Receive Messages}
-Whenever the server receives notice that a new message has been posted to a given channel, the server will send out a message to each user who is connected to that given channel. The message will be a \gls{json} file that looks something like this:
 
 
 \section{User Characteristics}\label{user-characteristics}
