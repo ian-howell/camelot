@@ -6,9 +6,8 @@ This database is created with the usage of Python with Psycopg2 which acts as a 
 Personally, I'm running MacOS with Posrgres and Postico to the handle the database. Postgres helps host a local server for viewing the database while Postico is used for visualizing the tables of the database.
 
 ## After Installation
-Assuming all things have been installed correctly, go to the database folder and run the following commands:
-- python3 create_database.py
-- python3 insert_data.py
+Assuming all things have been installed correctly, go to the database folder and run the following command:
+- python3 server_example.py
 
 ////// Add in a way for user's to input their database info when running python scripts /////
 
