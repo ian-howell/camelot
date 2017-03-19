@@ -16,11 +16,13 @@
 
 
 % Zachary Wileman
-% TODO: Create this slide to give an overall view of how the project works
 \begin{frame}
-    \frametitle{Camelot}
-
-    Camelot is an asynchronous \textit{Python3} server, using \textit{PostgreSQL} for the database.
+    \frametitle{About the Camelot Server}
+    \begin{itemize}
+        \item Camelot is an asynchronous \textit{Python3} server, using \textit{PostgreSQL} for the database.
+        \item The server on a Rasberry Pi (as provided by Ian Howell) so that the client team will be able to interact and test their code on it (assuming the server is up & running) and also so that interaction with the server can be done remotely.
+        \item The database is being tackled specifically by a module in Python called \textit{psycopg2} which uses \textit{postgreSQL}. 
+        \item All communication between the server and client applications is done via \textit{JSON} encoded data.
 \end{frame}
 
 
@@ -40,7 +42,7 @@
 % William Thurman
 \begin{frame}
     \frametitle{What Has Worked Well}
-    Below are some of the things has worked well for us up to this point.
+    Below are some of the things that have worked well for us up to this point.
 
     \begin{description}[<+->]
         \item[Teamwork] Task delegation and team work has made us able to accomplish more, in less time.
@@ -136,7 +138,7 @@
 \begin{frame}
     \frametitle{Tools \presentcount{tools}}
 
-    Github keeps track of all contributions from team members.
+    Github helps keep track of contributions from each team member.
 
     \centering
     \frame{\includegraphics[width=.60\textwidth]{images/github}}
@@ -155,8 +157,8 @@
     \end{enumerate}
 
     \begin{block}{Description \& Solution}
-        \only<1>{Even though we have an established system has been established between the teams (Discord), there is little to no talk to client and server teams. \textit{Solution: Communicate more..?}}
-        \only<2>{Although there is an established, core vision (IRC clone), working out the detail has proven to be difficult. \textit{Solution: Break it down to basic principles and work with teammates.}}
+        \only<1>{Even though we have set up a system for communicating between the client and server teams (Discord), there is little to no talk between the teams. \textit{Solution: Communicate more..?}}
+        \only<2>{Although there is an established, core vision (IRC clone), working out the details has proven to be difficult. \textit{Solution: Break it down to basic principles and work with teammates.}}
         \only<3>{Because we're relatively new to each other, and are unaware of each other's skill sets, assigning tasks becomes tricky. Also learning how to implement new things can be difficult. \textit{Always be sure teammates are comfortable with the tasks they're given.}}
     \end{block}
 \end{frame}
