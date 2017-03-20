@@ -20,9 +20,10 @@
     \frametitle{About the Camelot Server}
     \begin{itemize}
         \item Camelot is an asynchronous \textit{Python3} server, using \textit{PostgreSQL} for the database.
-        \item The server on a Rasberry Pi (as provided by Ian Howell) so that the client team will be able to interact and test their code on it (assuming the server is up & running) and also so that interaction with the server can be done remotely.
-        \item The database is being tackled specifically by a module in Python called \textit{psycopg2} which uses \textit{postgreSQL}. 
+        \item The server is housed on a Rasberry Pi (as provided by Ian Howell) so that the client team will be able to interact and test their code on it (assuming the server is up and running) and also so that interaction with the server can be done remotely.
+        \item The database is being tackled specifically by a module in Python called \textit{psycopg2} which uses \textit{postgreSQL}.
         \item All communication between the server and client applications is done via \textit{JSON} encoded data.
+    \end{itemize}
 \end{frame}
 
 
@@ -33,7 +34,7 @@
     \begin{figure}
         \centering
         \includegraphics[width=\textwidth]{images/camelot}
-        \caption{"On second thought, let's not go to Camelot. 'Tis a silly place." — Arthur, Monty Python}
+        \caption{"On second thought, let's not go to Camelot. `Tis a silly place." — Arthur, Monty Python}
         \label{fig:camelot}
     \end{figure}
 \end{frame}
@@ -121,7 +122,7 @@
             while True:
                 pass
         except KeyboardInterrupt:
-            print("Cleaning up server....")
+            print("Cleaning up server..")
             server.shutdown()
             server.server_close()
             print("Done! Goodbye")
