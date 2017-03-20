@@ -40,6 +40,8 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
     def handle(self):
         # Add the new client socket to the socket list
         SOCKET_LIST.append(self.request)
+        # Get this client's thread
+        cur_thread = threading.current_thread()
 
         while True:
             # Prompt the OS for all of the sockets which are ready to read from
@@ -47,16 +49,23 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
             for sock in ready_to_read:
                 # Receive the data from that socket
                 data = str(self.request.recv(1024), 'ascii')
-                print("Received {}".format(data))
-                # Get this client's thread
-                cur_thread = threading.current_thread()
-                for s in SOCKET_LIST:
-                    # If this is someone else's client
-                    if s != sock:
-                        response = bytes("({}): {}".format(cur_thread.name, data), 'ascii')
-                    else:
-                        response = bytes("(you): {}".format(data), 'ascii')
-                    s.sendall(response)
+                if data:
+                    print("Received `{}` from `{}`".format(data, sock))
+                    for s in SOCKET_LIST:
+                        # If this is someone else's client
+                        if s != sock:
+                            # response = bytes("({}): {}".format(cur_thread.name, data), 'ascii')
+                            response = bytes("({}): {}".format(s.fileno(), data), 'ascii')
+                        else:
+                            response = bytes("(you): {}".format(data), 'ascii')
+                        s.sendall(response)
+                else:
+                    if sock in SOCKET_LIST:
+                        print("Removing {}".format(sock.fileno()))
+                        # This line breaks because multiple threads are trying
+                        # to remove the same socket from the SOCKET_LIST at
+                        # the same time
+                        SOCKET_LIST.remove(sock)
 
 
 ## ThreadedTCPServer
