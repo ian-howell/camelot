@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import json
 import select
 import socket
 import socketserver
@@ -53,11 +54,16 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
             if data:
                 print("Received `{}` from `{}`".format(data.strip('\n'), thread_name))
                 for s in SOCKET_LIST:
-                    # If this is someone else's client
-                    if s != my_socket:
-                        response = bytes("({}): {}".format(thread_name, data), 'ascii')
-                    else:
-                        response = bytes("(you): {}".format(data), 'ascii')
+                    # An example of using JSON
+                    try:
+                        response_json = json.loads(data)['new_message']
+                        username = response_json['user']
+                        timestamp = response_json['timestamp']
+                        message = response_json['message']
+                        response = bytes("{} {:>12}: {}".format(timestamp,
+                            username, message), 'ascii')
+                    except KeyError as e:
+                        print("Could not find key `{}` in the response".format(e))
                     s.sendall(response)
             else:
                 # Remove the socket IF it is owned by this thread

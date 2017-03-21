@@ -1,10 +1,15 @@
 #!/usr/bin/python3
+import json
 import select
 import socket
 import sys
+import time
 
 
 def client(ip, port):
+    username = input("Enter a username: ")
+    if len(username) > 12:
+        username = username[:12]
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(2)
     sock.connect((ip, port))
@@ -30,7 +35,15 @@ def client(ip, port):
                     running = False
                     break
                 else:
-                    sock.sendall(bytes(message, 'utf-8'))
+                    message_json = {
+                            "new_message": {
+                                "channel_receiving_message": "Channel 1",
+                                "user": username,
+                                "timestamp": time.strftime("%H:%M:%S", time.localtime()),
+                                "message": message,
+                                },
+                            }
+                    sock.sendall(bytes(json.dumps(message_json), 'utf-8'))
                     sys.stdout.write(">>>")
                     sys.stdout.flush()
 
