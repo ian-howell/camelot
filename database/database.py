@@ -132,6 +132,9 @@ class Camelot_Database():
         conn = self.make_connection()
         cur = conn.cursor()
         for channel in channels:
+            # TODO ZW 3-20: Need to add an error handler for if the user has already joined
+            # a channel, and is trying to join it again.
+
             cur.execute('''INSERT INTO "CHANNELS_JOINED" VALUES ('{}', '{}')'''.format(username, channel))
         self.commit_and_close_connection(conn)
 
