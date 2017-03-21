@@ -7,9 +7,9 @@ import time
 
 
 def client(ip, port):
-    username = input("Enter a username: ")
-    if len(username) > 12:
-        username = username[:12]
+    my_username = input("Enter a username: ")
+    if len(my_username) > 12:
+        my_username = my_username[:12]
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.settimeout(2)
     sock.connect((ip, port))
@@ -22,9 +22,18 @@ def client(ip, port):
 
         for s in ready_to_read:
             if s == sock:
-                response = str(sock.recv(1024), 'utf-8')
-                if response:
-                    sys.stdout.write(response)
+                response_json = str(sock.recv(1024), 'utf-8')
+                if response_json:
+                    try:
+                        response = json.loads(response_json)['new_message']
+                        peer_username = response['user']
+                        timestamp = response['timestamp']
+                        message = response['message']
+                        peer_message = "{} {:>12}: {}".format(timestamp, peer_username, message)
+                    except KeyError:
+                        response = json.loads(response_json)['error']
+                        peer_message = "Something went wrong: {}".format(response)
+                    sys.stdout.write(peer_message)
                     sys.stdout.write(">>>")
                     sys.stdout.flush()
             else:
@@ -38,7 +47,7 @@ def client(ip, port):
                     message_json = {
                             "new_message": {
                                 "channel_receiving_message": "Channel 1",
-                                "user": username,
+                                "user": my_username,
                                 "timestamp": time.strftime("%H:%M:%S", time.localtime()),
                                 "message": message,
                                 },

@@ -54,16 +54,11 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
             if data:
                 print("Received `{}` from `{}`".format(data.strip('\n'), thread_name))
                 try:
-                    # An example of using JSON
-                    response_json = json.loads(data)['new_message']
-                    username = response_json['user']
-                    timestamp = response_json['timestamp']
-                    message = response_json['message']
-                    response = bytes("{} {:>12}: {}".format(timestamp,
-                        username, message), 'ascii')
-                except KeyError as e:
-                    print("Could not find key `{}` in the response".format(e))
-                    response = bytes("ERROR", 'ascii')
+                    response = bytes(data, 'ascii')
+                except:
+                    response = bytes(json.dumps({
+                        "error": "Something went wrong"
+                        }), 'ascii')
                 for s in SOCKET_LIST:
                     s.sendall(response)
             else:
