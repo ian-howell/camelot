@@ -53,17 +53,18 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
             data = str(my_socket.recv(1024), 'ascii')
             if data:
                 print("Received `{}` from `{}`".format(data.strip('\n'), thread_name))
-                for s in SOCKET_LIST:
+                try:
                     # An example of using JSON
-                    try:
-                        response_json = json.loads(data)['new_message']
-                        username = response_json['user']
-                        timestamp = response_json['timestamp']
-                        message = response_json['message']
-                        response = bytes("{} {:>12}: {}".format(timestamp,
-                            username, message), 'ascii')
-                    except KeyError as e:
-                        print("Could not find key `{}` in the response".format(e))
+                    response_json = json.loads(data)['new_message']
+                    username = response_json['user']
+                    timestamp = response_json['timestamp']
+                    message = response_json['message']
+                    response = bytes("{} {:>12}: {}".format(timestamp,
+                        username, message), 'ascii')
+                except KeyError as e:
+                    print("Could not find key `{}` in the response".format(e))
+                    response = bytes("ERROR", 'ascii')
+                for s in SOCKET_LIST:
                     s.sendall(response)
             else:
                 # Remove the socket IF it is owned by this thread
