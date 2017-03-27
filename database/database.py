@@ -132,7 +132,124 @@ class Camelot_Database():
 
             cur.execute('''INSERT INTO "CHANNELS_JOINED" VALUES ('{}', '{}')'''.format(username, channel))
         self.commit_and_close_connection(conn)
-
+    
+    ## Creates a channel in the database
+    #
+    # @param self The object pointer
+    # @param admin The username of the creator of the channel
+    # @param channel_name The name of the channel to be created
+    # @return A JSON object containing an error if there is one, none if successful
+    def create_channel(self, admin, channel_name):
+        conn = self.make_connection()
+        cur = conn.cursor()
+        try:
+            if(not(len(admin) <= 20)):
+                # Probably won't need this check, as the username should already be verified to be acceptable, but just in case
+                raise "Invalid admin username" 
+            elif(not(len(channel_name) <= 40)):
+                raise "Invalid channel name"
+            else:
+                cur.execute('''INSERT INTO "CHANNEL" VALUES ('{}', '{}')'''.format(channel_name, admin))
+                
+        except "Invalid admin username":
+            
+            error = json.dumps({
+                "error": "The username for the admin of this channel is longer than the max length."
+                }, indent=4)
+                
+        except "Invalid channel name":
+        
+            error = json.dumps({
+                "error": "The name of the channel is longer than the max length."
+                }, indent=4)
+                
+        finally:
+            self.commit_and_close_connection(conn)
+            if error is not None:
+                return error
+                
+    ## Removes a channel from the database
+    #
+    # @param self The object pointer
+    # @param channel_name The channel to be removed
+    # @return On success returns None, else returns a json object containing the error
+    def delete_channel(self, channel_name):
+        conn = self.make_connection()
+        cur = conn.cursor()
+        
+        try:
+        
+            if(not(len(channel_name) <= 40)):
+                raise "Invalid channel name"
+            else:
+                cur.execute('''
+                SELECT channelid 
+                FROM "CHANNEL" 
+                WHERE channelid='{}'
+                '''.format(channel_name))
+                
+                if not(cur.rowcount == 1):
+                    raise "Channel not found"
+                else:
+                    cur.execute('''
+                    DELETE FROM "CHANNEL"
+                    WHERE channelid='{}'
+                    '''.format(channel_name))
+        
+        except "Invalid channel name":
+            error = json.dumps({
+                "error": "The name of the specified channel is longer than the max length."
+                }, indent=4)
+        except "Channel not found":
+            error = json.dumps({
+                "error": "The specified channel was not found."
+                }, indent=4)
+        finally:
+            self.commit_and_close_connection(conn)
+            if error is not None:
+                return error
+    
+    ## Removes a user from the database
+    #
+    # @param self The object pointer
+    # @param username The username to be deleted
+    # @return On success returns None, else returns a JSON object containing the error
+    def delete_user(self, username):
+        conn = make_connection()
+        cur = conn.cursor()
+        
+        try:
+            if not(len(username) <= 20):
+                raise "Invalid username"
+            else:
+                # will we be requiring a password to delete the account as well?
+                cur.execute('''
+                SELECT userid
+                FROM "USER"
+                WHERE userid='{}'
+                '''.format(username))
+                
+                if not(cur.rowcount == 1):
+                    raise "Username not found"
+                else:
+                    cur.execute('''
+                    DELETE FROM "USER"
+                    WHERE userid='{}'
+                    '''.format(username))
+        
+        except "Invalid username":
+            error = json.dumps({
+                "error": "The username exceeds the max length"
+                }, indent=4)
+        except "Username not found":
+            error = json.dumps({
+                "error": "The username was not found in the database"
+                }, ident=4)
+        finally:
+            self.commit_and_close_connection(conn)
+            if error is not None:
+                return error
+    
     ## Creates tables in database
     #
     #  @param self The object pointer
