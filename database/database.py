@@ -183,17 +183,9 @@ class Camelot_Database():
         cur = conn.cursor()
 
         # Checks if the channel exists in the database
-        cur.execute('''
-        SELECT channelid
-        FROM "CHANNEL"
-        WHERE channelid='{}'
-        '''.format(channel_name))
-
-        if cur.rowcount != 1:
-            self.commit_and_close_connection(conn)
-            return json.dumps({
-                "error": "The specified channel was not found."
-            }, indent=4)
+        error = self.check_channel_in_database(channel_name)
+        if error:
+            return error
 
         # Checks if the user trying to delete the channel, is the admin of the channel
         cur.execute('''
@@ -248,6 +240,11 @@ class Camelot_Database():
     def get_users_in_channel(self, channel_name):
         conn = self.make_connection()
         cur = conn.cursor()
+
+        # Checks if the channel exists in the database
+        error = self.check_channel_in_database(channel_name)
+        if error:
+            return error
 
         # Grabs the users for the specified channel
         cur.execute('''
@@ -317,6 +314,29 @@ class Camelot_Database():
         SET password='{}'
         WHERE userid='{}'
         '''.format(new_password, username))
+
+        self.commit_and_close_connection(conn)
+
+    ## Checks if the channel exists in the database
+    #
+    #  @param self The object pointer
+    #  @param channel_name The channel specified to check if it exists in the database
+    def check_channel_in_database(self, channel_name):
+        conn = self.make_connection()
+        cur = conn.cursor()
+
+        # Checks if the channel exists in the database
+        cur.execute('''
+        SELECT channelid
+        FROM "CHANNEL"
+        WHERE channelid='{}'
+        '''.format(channel_name))
+
+        if cur.rowcount != 1:
+            self.commit_and_close_connection(conn)
+            return json.dumps({
+                "error": "The specified channel was not found."
+            }, indent=4)
 
         self.commit_and_close_connection(conn)
 

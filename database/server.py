@@ -26,13 +26,7 @@ class Camelot_Server():
         return mydb.leave_channel(channel_name, user)
 
     def get_users_in_channel(self, mydb, client_request):
-        try:
-            channel_name = client_request['get_users_in_channel']
-        except KeyError:
-            return json.dumps({
-                "error": "The JSON file sent didn't contain valid information."
-            }, indent=4)
-
+        channel_name = client_request['get_users_in_channel']
         return mydb.get_users_in_channel(channel_name)
 
     def delete_account(self, mydb, client_request):

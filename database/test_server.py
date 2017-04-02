@@ -434,3 +434,39 @@ def test_delete_account_success():
 
     assert expected_response == result
     mydb.empty_tables()
+
+def test_get_users_in_channel_channel_does_not_exist():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "get_users_in_channel": "Client Team"
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The specified channel was not found."
+    }, indent=4)
+
+    result = server.get_users_in_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_get_users_in_channel_success():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "get_users_in_channel": "Client Team"
+    }, indent=4))
+
+    mydb.create_account("username", "password")
+    mydb.create_account("user2", "password")
+    mydb.add_channels_to_user_info("username", ["Client Team"])
+    mydb.add_channels_to_user_info("user2", ["Client Team"])
+
+    expected_response = mydb.get_users_in_channel("Client Team")
+    result = server.get_users_in_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
