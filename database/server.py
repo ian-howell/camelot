@@ -127,4 +127,6 @@ class Camelot_Server():
         return mydb.create_account(client_username, client_password)
 
     def new_message(self, mydb, client_request):
+        # Going to need to add a way to send the new message to the correct users
+
         return json.dumps(client_request, indent=4)

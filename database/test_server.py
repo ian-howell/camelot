@@ -186,3 +186,30 @@ def test_login_success():
 
     assert expected_response == result
     mydb.empty_tables()
+
+def test_new_message():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "new_message": {
+            "channel_receiving_message": "Client Team",
+            "user": "username",
+            "timestamp": "2017-03-14 14:11:30",
+            "message": "the actual message that the user posted"
+        }
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "new_message": {
+            "channel_receiving_message": "Client Team",
+            "user": "username",
+            "timestamp": "2017-03-14 14:11:30",
+            "message": "the actual message that the user posted"
+        }
+    }, indent=4)
+
+    result = server.new_message(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
