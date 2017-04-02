@@ -10,7 +10,7 @@ import json
 def test_client_create_account():
     return json.dumps({
         "create_account": {
-            "username": "username",
+            "username": "zach",
             "password": "password",
         }
     }, indent=4)
@@ -59,6 +59,21 @@ def test_client_delete_account():
         }
     }, indent=4)
 
+def test_client_get_users_in_channel():
+    return json.dumps({
+        "get_users_in_channel": "Client Team"
+    }, indent=4)
+
+def get_users_in_channel(mydb, client_request):
+    try:
+        channel_name = client_request['get_users_in_channel']
+    except KeyError:
+        return json.dumps({
+            "error": "The JSON file sent didn't contain valid information."
+        }, indent=4)
+
+    return mydb.get_users_in_channel(channel_name)
+
 def delete_account(mydb, client_request):
     # Check that no one is logged in under the given username
     # Checks what channels the user is an admin of because those channels
@@ -103,7 +118,8 @@ def create_channel(mydb, client_request):
 def join_channel(mydb, client_request):
 
     # For now, I'll assume with a local variable the client's username
-    username = 'username'
+    # Eventaully, this will come from session.user
+    username = 'zach'
 
     # Makes sure there are channels for the user to join
     current_channels_available = mydb.get_channels()
@@ -159,13 +175,14 @@ if __name__ == '__main__':
     mydb.create_tables('tables.sql')
     #mydb.insert_data('data.sql')
 
-    client_request = json.loads(test_client_create_account())
+    #client_request = json.loads(test_client_create_account())
     #client_request = json.loads(test_client_login())
     #client_request = json.loads(test_client_join_channels())
     #client_request = json.loads(test_client_new_message())
     #client_request = json.loads(test_client_create_channel())
     #client_request = json.loads(test_client_delete_channel())
     #client_request = json.loads(test_client_delete_account())
+    client_request = json.loads(test_client_get_users_in_channel())
 
     for operation in client_request.keys():
         if operation == 'create_account':
@@ -186,6 +203,8 @@ if __name__ == '__main__':
             response = delete_channel(mydb, client_request)
         elif operation == 'delete_account':
             response = delete_account(mydb, client_request)
+        elif operation == 'get_users_in_channel':
+            response = get_users_in_channel(mydb, client_request)
         else:
             response = json.dumps({
                 "error": "The JSON file sent didn't contain valid information."

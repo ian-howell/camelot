@@ -243,6 +243,34 @@ class Camelot_Database():
 
         self.commit_and_close_connection(conn)
 
+    ## Gets all over the users in a specified channel
+    #
+    # @param self The object pointer
+    # @param channel_name The channel specified for getting the users of
+    # @return On success returns None, else returns a JSON object containing the error
+    def get_users_in_channel(self, channel_name):
+        conn = self.make_connection()
+        cur = conn.cursor()
+
+        cur.execute('''
+        SELECT userid
+        FROM "CHANNELS_JOINED"
+        WHERE channelid='{}'
+        '''.format(channel_name))
+        rows = cur.fetchall()
+        result = {
+            "users_in_channel": {
+                "channel": channel_name,
+                "users": []
+            }
+        }
+
+        for user in rows:
+            result['users_in_channel']['users'].append(user[0])
+
+        self.commit_and_close_connection(conn)
+        return json.dumps(result, indent=4)
+
     ## Creates tables in database
     #
     #  @param self The object pointer
