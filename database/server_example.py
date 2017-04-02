@@ -69,6 +69,27 @@ def test_client_leave_channel():
         "leave_channel": "Client Team"
     }, indent=4)
 
+def test_client_change_password():
+    return json.dumps({
+        "change_password": {
+            "username": "username",
+            "current_password": "password",
+            "new_password": "their new password"
+        }
+    })
+
+def change_password(mydb, client_request):
+    try:
+        username = client_request['change_password']['username']
+        current_password = client_request['change_password']['current_password']
+        new_password = client_request['change_password']['new_password']
+    except KeyError:
+        return json.dumps({
+            "error": "The JSON file sent didn't contain valid information."
+        }, indent=4)
+
+    return mydb.change_password(username, current_password, new_password)
+
 def leave_channel(mydb, client_request):
     channel_name = client_request['leave_channel']
 
@@ -160,9 +181,12 @@ def login(mydb, client_request):
         client_username = client_request['login']['username']
         client_password = client_request['login']['password']
 
-        result = mydb.check_username_password(client_username, client_password)
+        result = mydb.check_username_password_in_database(client_username, client_password)
         if result:
             return result
+        else:
+            return mydb.get_channels()
+
     else:
         return json.dumps({
             "error": "The JSON file sent didn't contain valid information."
@@ -191,6 +215,8 @@ if __name__ == '__main__':
     mydb.create_tables('tables.sql')
     #mydb.insert_data('data.sql')
 
+    #print(mydb.get_channels())
+
     #client_request = json.loads(test_client_create_account())
     #client_request = json.loads(test_client_login())
     #client_request = json.loads(test_client_join_channels())
@@ -199,7 +225,8 @@ if __name__ == '__main__':
     #client_request = json.loads(test_client_delete_channel())
     #client_request = json.loads(test_client_delete_account())
     #client_request = json.loads(test_client_get_users_in_channel())
-    client_request = json.loads(test_client_leave_channel())
+    #client_request = json.loads(test_client_leave_channel())
+    client_request = json.loads(test_client_change_password())
 
     for operation in client_request.keys():
         if operation == 'create_account':
@@ -224,6 +251,8 @@ if __name__ == '__main__':
             response = get_users_in_channel(mydb, client_request)
         elif operation == 'leave_channel':
             response = leave_channel(mydb, client_request)
+        elif operation == 'change_password':
+            response = change_password(mydb, client_request)
         else:
             response = json.dumps({
                 "error": "The JSON file sent didn't contain valid information."
