@@ -287,3 +287,35 @@ def test_join_channel_success():
 
     assert expected_response == result
     mydb.empty_tables()
+
+def test_create_channel_channel_name_incorrect_length():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "create_channel": "Test Channel Name with incorrect length-----------"
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The name of the channel isn't of the correct length (0 < len(channel_name) <= 40)."
+    }, indent=4)
+
+    result = server.create_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_create_channel_success():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "create_channel": "Test Channel Name"
+    }, indent=4))
+
+    expected_response = None
+
+    result = server.create_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()

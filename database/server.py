@@ -69,7 +69,8 @@ class Camelot_Server():
         # and set it to the admin. A check will also need to be done to make sure that
         # a session has a user
         #admin = session.user
-        admin = "username" #Temporary
+        #admin = "username" #Temporary
+        admin = None
 
         return mydb.create_channel(channel_name, admin)
 

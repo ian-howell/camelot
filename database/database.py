@@ -164,7 +164,11 @@ class Camelot_Database():
                 "error": "The name of the channel isn't of the correct length (0 < len(channel_name) <= 40)."
             }, indent=4)
 
-        cur.execute('''INSERT INTO "CHANNEL" VALUES ('{}', '{}')'''.format(channel_name, admin))
+        # Used for checking if the admin value has been set
+        if admin:
+            cur.execute('''INSERT INTO "CHANNEL" VALUES ('{}', '{}')'''.format(channel_name, admin))
+        else:
+            cur.execute('''INSERT INTO "CHANNEL" VALUES ('{}', NULL)'''.format(channel_name))
         self.commit_and_close_connection(conn)
 
 
