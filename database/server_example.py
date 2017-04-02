@@ -7,6 +7,13 @@ import json
 # 'json.loads' decodes the json data
 #########################################
 
+def test_client_bad_json():
+    return json.dumps({
+        "creating_channel":  {
+            "test":"asd"
+        }
+    })
+
 def test_client_create_account():
     return json.dumps({
         "create_account": {
@@ -23,7 +30,7 @@ def test_client_login():
         }
     }, indent=4)
 
-def test_client_join_channels():
+def test_client_join_channel():
     return json.dumps({
         "join_channel": [
             "Client Team",
@@ -205,6 +212,9 @@ def create_account(mydb, client_request):
             "error": "The JSON file sent didn't contain valid information."
         }, indent=4)
 
+def new_message(mydb, client_request):
+    return json.dumps(client_request, indent=4)
+
 def send_to_client(response):
     print("This is what will get sent to the client:\n")
     print(response)
@@ -215,48 +225,47 @@ if __name__ == '__main__':
     mydb.create_tables('tables.sql')
     #mydb.insert_data('data.sql')
 
-    #print(mydb.get_channels())
+    server_functions = {
+        'create_account':create_account,
+        'login':login,
+        'join_channel':join_channel,
+        'new_message':new_message,
+        'create_channel':create_channel,
+        'delete_channel':delete_channel,
+        'delete_account':delete_account,
+        'get_users_in_channel':get_users_in_channel,
+        'leave_channel':leave_channel,
+        'change_password':change_password
+    }
 
+    client_request = json.loads(test_client_bad_json())
     #client_request = json.loads(test_client_create_account())
     #client_request = json.loads(test_client_login())
-    #client_request = json.loads(test_client_join_channels())
+    #client_request = json.loads(test_client_join_channel())
     #client_request = json.loads(test_client_new_message())
     #client_request = json.loads(test_client_create_channel())
     #client_request = json.loads(test_client_delete_channel())
     #client_request = json.loads(test_client_delete_account())
     #client_request = json.loads(test_client_get_users_in_channel())
     #client_request = json.loads(test_client_leave_channel())
-    client_request = json.loads(test_client_change_password())
+    #client_request = json.loads(test_client_change_password())
 
     for operation in client_request.keys():
-        if operation == 'create_account':
-            response = create_account(mydb, client_request)
-        elif operation == 'login':
-            response = login(mydb, client_request)
-        elif operation == 'join_channel':
-            response = join_channel(mydb, client_request)
-        elif operation == 'new_message':
-            # TODO ZW 3-20: Need to add a check that makes sure a client is only getting sent
-            # messages if the user is a part of the specified channel.
-            response = json.dumps(client_request, indent=4)
-        elif operation == 'create_channel':
-            response = create_channel(mydb, client_request)
-        elif operation == 'delete_channel':
-            # TODO zw 4-1: Need to add a way to send a message to all users if a channel has
-            # been deleted.
-            response = delete_channel(mydb, client_request)
-        elif operation == 'delete_account':
-            response = delete_account(mydb, client_request)
-        elif operation == 'get_users_in_channel':
-            response = get_users_in_channel(mydb, client_request)
-        elif operation == 'leave_channel':
-            response = leave_channel(mydb, client_request)
-        elif operation == 'change_password':
-            response = change_password(mydb, client_request)
-        else:
+        try:
+            response = server_functions[operation](mydb, client_request)
+        except KeyError:
             response = json.dumps({
                 "error": "The JSON file sent didn't contain valid information."
             }, indent=4)
+
+
+    # TODO ZW 3-20: Need to add a check that makes sure a client is only getting sent
+    # messages if the user is a part of the specified channel.
+    #response = json.dumps(client_request, indent=4)
+
+    # TODO zw 4-1: Need to add a way to send a message to all users if a channel has
+    # been deleted.
+
 
     if response:
         send_to_client(response)
