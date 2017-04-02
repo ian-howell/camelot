@@ -2,10 +2,21 @@ from database import Camelot_Database
 from server import Camelot_Server
 import json
 
-############################### HOW TO USE THIS FILE ####################################
-# INSTALL: pytest (for me I installed it via command-line using: "pip3 install pytest") #
-# RUN: Just type "pytest" in the command-line while in the same directory as this file  #
-#########################################################################################
+################################### HOW TO USE THIS FILE #########################################
+# Pytest: Used for running unit tests                                                            #
+# INSTALL: pytest (for me I installed it via command-line using: "pip3 install pytest")          #
+# RUN: Just type "pytest" in the command-line while in the same directory as this file           #
+#                                                                                                #
+# Pytest-cov: Used for seeing how much code coverage there is                                    #
+# INSTALL: pytest-cov (for me I installed it via command-line using: "pip3 install pytest-cov")  #
+# RUN: Just type "py.test --cov=./" in the command-line while in the same directory as this file #
+##################################################################################################
+
+
+def test_setup():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+    mydb.empty_tables()
 
 def test_create_account_invalid_json():
     server = Camelot_Server()
@@ -210,6 +221,69 @@ def test_new_message():
     }, indent=4)
 
     result = server.new_message(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_join_channel_no_channels_available():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "join_channel": [
+            "Client Team",
+            "Server Team"
+        ]
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "No channels exist in the database."
+    }, indent=4)
+
+    result = server.join_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_join_channel_that_doesnt_exist():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "join_channel": [
+            "Client Team",
+            "Server Team"
+        ]
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The user is trying to join a channel that doesn't exist."
+    }, indent=4)
+
+    mydb.create_account("username", "password")
+    mydb.create_channel("TestChannel", "username")
+    result = server.join_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_join_channel_success():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "join_channel": [
+            "Client Team",
+            "Server Team"
+        ]
+    }, indent=4))
+
+    expected_response = None
+
+    mydb.create_account("username", "password")
+    mydb.create_channel("Client Team", "username")
+    mydb.create_channel("Server Team", "username")
+    result = server.join_channel(mydb, client_request)
 
     assert expected_response == result
     mydb.empty_tables()

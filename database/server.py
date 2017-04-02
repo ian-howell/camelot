@@ -80,12 +80,12 @@ class Camelot_Server():
 
         # For now, I'll assume with a local variable the client's username
         # Eventaully, this will come from session.user
-        username = 'zach'
+        username = 'username'
 
         # Makes sure there are channels for the user to join
-        current_channels_available = mydb.get_channels()
+        current_channels_available = json.loads(mydb.get_channels())
         if 'error' in current_channels_available.keys():
-            return current_channels_available
+            return json.dumps(current_channels_available, indent=4)
 
         channels_user_wants_to_join = [channel for channel in client_request['join_channel']]
 
