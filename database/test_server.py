@@ -319,3 +319,59 @@ def test_create_channel_success():
 
     assert expected_response == result
     mydb.empty_tables()
+
+def test_delete_channel_channel_not_found():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "delete_channel": "Non-existent channel"
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The specified channel was not found."
+    }, indent=4)
+
+    mydb.create_account("username", "password")
+    mydb.create_channel("TestChannel", "username")
+    result = server.delete_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_delete_channel_user_not_authorized_to_delete_channel():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "delete_channel": "TestChannel"
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The user trying to delete the channel isn't the admin of the channel."
+    }, indent=4)
+
+    mydb.create_account("username", "password")
+    mydb.create_account("admin user", "password")
+    mydb.create_channel("TestChannel", "admin user")
+    result = server.delete_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_delete_channel_success():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "delete_channel": "TestChannel"
+    }, indent=4))
+
+    expected_response = None
+
+    mydb.create_account("username", "password")
+    mydb.create_channel("TestChannel", "username")
+    result = server.delete_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()

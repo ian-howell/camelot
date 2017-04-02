@@ -150,10 +150,10 @@ class Camelot_Database():
 
     ## Creates a channel in the database
     #
-    # @param self The object pointer
-    # @param channel_name The name of the channel to be created
-    # @param admin The username of the creator of the channel
-    # @return A JSON object containing an error if there is one, none if successful
+    #  @param self The object pointer
+    #  @param channel_name The name of the channel to be created
+    #  @param admin The username of the creator of the channel
+    #  @return A JSON object containing an error if there is one, none if successful
     def create_channel(self, channel_name, admin):
         conn = self.make_connection()
         cur = conn.cursor()
@@ -174,10 +174,10 @@ class Camelot_Database():
 
     ## Removes a channel from the database
     #
-    # @param self The object pointer
-    # @param channel_name The channel to be removed
-    # @param user The user calling the function
-    # @return On success returns None, else returns a json object containing the error
+    #  @param self The object pointer
+    #  @param channel_name The channel to be removed
+    #  @param user The user calling the function
+    #  @return On success returns None, else returns a json object containing the error
     def delete_channel(self, channel_name, user):
         conn = self.make_connection()
         cur = conn.cursor()
@@ -218,10 +218,10 @@ class Camelot_Database():
 
     ## Removes a user from the database
     #
-    # @param self The object pointer
-    # @param username The username to be deleted
-    # @param password The password to be associated with the username
-    # @return On success returns None, else returns a JSON object containing the error
+    #  @param self The object pointer
+    #  @param username The username to be deleted
+    #  @param password The password to be associated with the username
+    #  @return On success returns None, else returns a JSON object containing the error
     def delete_account(self, username, password):
         conn = self.make_connection()
         cur = conn.cursor()
@@ -249,9 +249,9 @@ class Camelot_Database():
 
     ## Gets all over the users in a specified channel
     #
-    # @param self The object pointer
-    # @param channel_name The channel specified for getting the users of
-    # @return On success returns None, else returns a JSON object containing the error
+    #  @param self The object pointer
+    #  @param channel_name The channel specified for getting the users of
+    #  @return On success returns None, else returns a JSON object containing the error
     def get_users_in_channel(self, channel_name):
         conn = self.make_connection()
         cur = conn.cursor()
