@@ -41,9 +41,29 @@ class Camelot_Database():
 
         if cur.rowcount:
             error = "That username is already taken."
+        else:
+            error = validate_username_password(username, password)
+
+        if error:
+            return error
+
+        # If no errors occured, create the account
+        cur.execute('''INSERT INTO "USER" VALUES ('{}', '{}')'''.format(username, password))
+        self.commit_and_close_connection(conn)
+
+    ## Validates the username & password are of the correct length
+    #
+    #  @param self The object pointer
+    #  @param username The name (string) of the user to add
+    #  @param password The password (string) to be associated with this user
+    #  @return None on success, a JSON object with failure reason otherwise
+    def validate_username_password(self, username, password):
+        conn = self.make_connection()
+        cur = conn.cursor()
+        error = None
 
         # Checks the lengths of the username & password
-        elif len(username) > 20 or len(username) < 1:
+        if len(username) > 20 or len(username) < 1:
             error = "The username isn't of the correct length (0 < len(username) <= 20)."
         elif len(password) > 20 or len(username) < 1:
             error = "The password isn't of the correct length (0 < len(password) <= 20)."
@@ -55,8 +75,6 @@ class Camelot_Database():
                 "error": error
             })
 
-        # If no errors occured, create the account
-        cur.execute('''INSERT INTO "USER" VALUES ('{}', '{}')'''.format(username, password))
         self.commit_and_close_connection(conn)
 
     ## Checks that the username & password are a match in the database
@@ -64,8 +82,8 @@ class Camelot_Database():
     #  @param self The object pointer
     #  @param username The name (string) of the user to check
     #  @param password The password (string) to be associated with this user
-    #  @return A JSON object containing a list of channels on success, or an error code otherwise
-    def check_username_password(self, username, password):
+    #  @return A JSON object containing an error message or None if the username/password is in the database
+    def check_username_password_in_database(self, username, password):
         conn = self.make_connection()
         cur = conn.cursor()
 
@@ -82,27 +100,7 @@ class Camelot_Database():
                 "error": "The username/password combination do not exist in the database."
             }, indent=4)
 
-        # TODO IH 3-19: This should probably be in its own function
-        # Actually, isn't this just a copy-paste of the get_channels function?
-        # Return back to the user the channels in the database
-        cur.execute('''
-        SELECT channelid
-        FROM "CHANNEL"
-        ''')
-
-        rows = cur.fetchall()
-        if not rows:
-            self.commit_and_close_connection(conn)
-            return json.dumps({
-                "error": "No channels exist in the database."
-            }, indent=4)
-
-        json_to_be_sent = {"channels": []}
-        for channel in rows:
-            json_to_be_sent['channels'].append(channel[0])
-
         self.commit_and_close_connection(conn)
-        return json.dumps(json_to_be_sent, indent=4)
 
     ## Gets the current channels in the database
     #
@@ -129,7 +127,7 @@ class Camelot_Database():
             channels['channels'].append(channel[0])
 
         self.commit_and_close_connection(conn)
-        return channels
+        return json.dumps(channels, indent=4)
 
     ## Adds to "CHANNELS_JOINED" table in the database; adds the
     #  channels that the user wants to join.
@@ -243,6 +241,86 @@ class Camelot_Database():
 
         self.commit_and_close_connection(conn)
 
+    ## Gets all over the users in a specified channel
+    #
+    # @param self The object pointer
+    # @param channel_name The channel specified for getting the users of
+    # @return On success returns None, else returns a JSON object containing the error
+    def get_users_in_channel(self, channel_name):
+        conn = self.make_connection()
+        cur = conn.cursor()
+
+        # Grabs the users for the specified channel
+        cur.execute('''
+        SELECT userid
+        FROM "CHANNELS_JOINED"
+        WHERE channelid='{}'
+        '''.format(channel_name))
+        rows = cur.fetchall()
+
+        # Creates base json data to be returned
+        result = {
+            "users_in_channel": {
+                "channel": channel_name,
+                "users": []
+            }
+        }
+
+        # Adds users to the dictionary
+        for user in rows:
+            result['users_in_channel']['users'].append(user[0])
+
+        self.commit_and_close_connection(conn)
+        return json.dumps(result, indent=4)
+
+    ## Makes the user leave the specified channel
+    #
+    #  @param self The object pointer
+    #  @param channel_name The channel specified that the user wants to leave_channel
+    #  @param user The user who is wanting to leave a channel
+    def leave_channel(self, channel_name, user):
+        conn = self.make_connection()
+        cur = conn.cursor()
+
+        cur.execute('''
+        DELETE FROM "CHANNELS_JOINED"
+        WHERE channelid='{}' AND userid='{}'
+        '''.format(channel_name, user))
+
+        self.commit_and_close_connection(conn)
+
+    ## Allows the user to change their password
+    #
+    #  @param self The object pointer
+    #  @param username A string used to identify the user attempting to change their username
+    #  @param current_password The current password of the user
+    #  @param new_password The new password that the user is wanting to replace their old password with
+    def change_password(self, username, current_password, new_password):
+        conn = self.make_connection()
+        cur = conn.cursor()
+        error = None
+
+        # Checks if the username/password combination exist in the database
+        error = self.check_username_password_in_database(username, current_password)
+        if error:
+            self.commit_and_close_connection(conn)
+            return error
+
+        # Checks that new password is valid (also checks username by default)
+        error = self.validate_username_password(username, new_password)
+        if error:
+            self.commit_and_close_connection(conn)
+            return error
+
+        # If no errors occured, updates the user's password
+        cur.execute('''
+        UPDATE "USER"
+        SET password='{}'
+        WHERE userid='{}'
+        '''.format(new_password, username))
+
+        self.commit_and_close_connection(conn)
+
     ## Creates tables in database
     #
     #  @param self The object pointer
@@ -271,7 +349,7 @@ class Camelot_Database():
     def empty_tables(self, ):
         conn = self.make_connection()
         cur = conn.cursor()
-        cur.execute("""Truncate "USER", "CHANNEL", "CHANNELS_JOINED", "IS_CONNECTED_TO" CASCADE""")
+        cur.execute("""Truncate "USER", "CHANNEL", "CHANNELS_JOINED" CASCADE""")
         self.commit_and_close_connection(conn)
 
     ## Adds data to the database & closes the connection to the database
