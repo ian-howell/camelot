@@ -375,3 +375,62 @@ def test_delete_channel_success():
 
     assert expected_response == result
     mydb.empty_tables()
+
+def test_delete_account_invalid_json():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "delete_account": {
+            "username_invalid": "username",
+            "password": "password"
+        }
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The JSON file sent didn't contain valid information."
+    }, indent=4)
+
+    result = server.delete_account(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_delete_account_account_does_not_exist():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "delete_account": {
+            "username": "username",
+            "password": "password"
+        }
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The username/password combination do not exist in the database."
+    }, indent=4)
+
+    result = server.delete_account(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_delete_account_success():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "delete_account": {
+            "username": "username",
+            "password": "password"
+        }
+    }, indent=4))
+
+    expected_response = None
+
+    mydb.create_account("username", "password")
+    result = server.delete_account(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()

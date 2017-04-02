@@ -227,17 +227,10 @@ class Camelot_Database():
         cur = conn.cursor()
 
         # Check for username and password are in database
-        cur.execute('''
-        SELECT userid
-        FROM "USER"
-        WHERE userid='{}' AND password='{}'
-        '''.format(username, password))
+        error = self.check_username_password_in_database(username, password)
 
-        if cur.rowcount != 1:
-            self.commit_and_close_connection(conn)
-            return json.dumps({
-                "error": "The username/password combination is incorrect."
-            }, indent=4)
+        if error:
+            return error
 
         # If no errors occur, delete the account
         cur.execute('''
