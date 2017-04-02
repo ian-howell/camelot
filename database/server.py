@@ -101,33 +101,30 @@ class Camelot_Server():
 
     def login(self, mydb, client_request):
         # Makes sure the user is sending valid information
-        if client_request['login']['username'] and client_request['login']['password']:
+        try:
             client_username = client_request['login']['username']
             client_password = client_request['login']['password']
-
-            result = mydb.check_username_password_in_database(client_username, client_password)
-            if result:
-                return result
-            else:
-                return mydb.get_channels()
-
-        else:
+        except KeyError:
             return json.dumps({
                 "error": "The JSON file sent didn't contain valid information."
             }, indent=4)
+
+        result = mydb.check_username_password_in_database(client_username, client_password)
+        if result:
+            return result
+        else:
+            return mydb.get_channels()
 
     def create_account(self, mydb, client_request):
-        if client_request['create_account']['username'] and client_request['create_account']['password']:
+        try:
             client_username = client_request['create_account']['username']
             client_password = client_request['create_account']['password']
-
-            result = mydb.create_account(client_username, client_password)
-            if result:
-                return result
-        else:
+        except KeyError:
             return json.dumps({
                 "error": "The JSON file sent didn't contain valid information."
             }, indent=4)
+
+        return mydb.create_account(client_username, client_password)
 
     def new_message(self, mydb, client_request):
         return json.dumps(client_request, indent=4)

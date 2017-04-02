@@ -8,9 +8,9 @@ import json
 # 'json.loads' decodes the json data
 #########################################
 
-def test_client_bad_json():
+def test_bad_json():
     return json.dumps({
-        "creating_channel":  {
+        "creating_channel": {
             "test":"asd"
         }
     })
@@ -94,12 +94,11 @@ def send_to_client(response):
 if __name__ == '__main__':
     server = Camelot_Server()
     mydb = Camelot_Database()
-    mydb.create_tables('tables.sql')
     #mydb.insert_data('data.sql')
 
-    #client_request = json.loads(test_client_bad_json())
+    client_request = json.loads(test_bad_json())
     #client_request = json.loads(test_client_create_account())
-    client_request = json.loads(test_client_login())
+    #client_request = json.loads(test_client_login())
     #client_request = json.loads(test_client_join_channel())
     #client_request = json.loads(test_client_new_message())
     #client_request = json.loads(test_client_create_channel())

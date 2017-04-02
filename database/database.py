@@ -8,7 +8,7 @@ import json
 class Camelot_Database():
 
     def __init__(self):
-        pass
+        self.create_tables('tables.sql')
 
     ## Makes a connection to database
     #
@@ -40,9 +40,11 @@ class Camelot_Database():
         '''.format(username))
 
         if cur.rowcount:
-            error = "That username is already taken."
+            error = json.dumps({
+                "error": "That username is already taken."
+            }, indent=4)
         else:
-            error = validate_username_password(username, password)
+            error = self.validate_username_password(username, password)
 
         if error:
             return error
@@ -73,7 +75,7 @@ class Camelot_Database():
             self.commit_and_close_connection(conn)
             return json.dumps({
                 "error": error
-            })
+            }, indent=4)
 
         self.commit_and_close_connection(conn)
 
@@ -231,7 +233,7 @@ class Camelot_Database():
             self.commit_and_close_connection(conn)
             return json.dumps({
                 "error": "The username/password combination is incorrect."
-            })
+            }, indent=4)
 
         # If no errors occur, delete the account
         cur.execute('''
@@ -346,7 +348,7 @@ class Camelot_Database():
     ## Empties all of the current database tables (created by create_tables)
     #
     #  @param self The object pointer
-    def empty_tables(self, ):
+    def empty_tables(self):
         conn = self.make_connection()
         cur = conn.cursor()
         cur.execute("""Truncate "USER", "CHANNEL", "CHANNELS_JOINED" CASCADE""")
