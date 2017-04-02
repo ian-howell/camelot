@@ -64,6 +64,22 @@ def test_client_get_users_in_channel():
         "get_users_in_channel": "Client Team"
     }, indent=4)
 
+def test_client_leave_channel():
+    return json.dumps({
+        "leave_channel": "Client Team"
+    }, indent=4)
+
+def leave_channel(mydb, client_request):
+    channel_name = client_request['leave_channel']
+
+    # Eventaully, when the server is working, you'll grab the user making the request
+    # and set it to the admin. A check will also need to be done to make sure that
+    # a session has a user
+    #user = session.user
+    user = "zach" #Temporary
+
+    return mydb.leave_channel(channel_name, user)
+
 def get_users_in_channel(mydb, client_request):
     try:
         channel_name = client_request['get_users_in_channel']
@@ -182,7 +198,8 @@ if __name__ == '__main__':
     #client_request = json.loads(test_client_create_channel())
     #client_request = json.loads(test_client_delete_channel())
     #client_request = json.loads(test_client_delete_account())
-    client_request = json.loads(test_client_get_users_in_channel())
+    #client_request = json.loads(test_client_get_users_in_channel())
+    client_request = json.loads(test_client_leave_channel())
 
     for operation in client_request.keys():
         if operation == 'create_account':
@@ -205,6 +222,8 @@ if __name__ == '__main__':
             response = delete_account(mydb, client_request)
         elif operation == 'get_users_in_channel':
             response = get_users_in_channel(mydb, client_request)
+        elif operation == 'leave_channel':
+            response = leave_channel(mydb, client_request)
         else:
             response = json.dumps({
                 "error": "The JSON file sent didn't contain valid information."

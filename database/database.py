@@ -252,12 +252,15 @@ class Camelot_Database():
         conn = self.make_connection()
         cur = conn.cursor()
 
+        # Grabs the users for the specified channel
         cur.execute('''
         SELECT userid
         FROM "CHANNELS_JOINED"
         WHERE channelid='{}'
         '''.format(channel_name))
         rows = cur.fetchall()
+
+        # Creates base json data to be returned
         result = {
             "users_in_channel": {
                 "channel": channel_name,
@@ -265,11 +268,28 @@ class Camelot_Database():
             }
         }
 
+        # Adds users to the dictionary
         for user in rows:
             result['users_in_channel']['users'].append(user[0])
 
         self.commit_and_close_connection(conn)
         return json.dumps(result, indent=4)
+
+    ## Makes the user leave the specified channel
+    #
+    #  @param self The object pointer
+    #  @param channel_name The channel specified that the user wants to leave_channel
+    #  @param user The user who is wanting to leave a channel
+    def leave_channel(self, channel_name, user):
+        conn = self.make_connection()
+        cur = conn.cursor()
+
+        cur.execute('''
+        DELETE FROM "CHANNELS_JOINED"
+        WHERE channelid='{}' AND userid='{}'
+        '''.format(channel_name, user))
+
+        self.commit_and_close_connection(conn)
 
     ## Creates tables in database
     #
