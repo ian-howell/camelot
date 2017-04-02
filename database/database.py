@@ -17,7 +17,7 @@ class Camelot_Database():
         try:
             conn = psycopg2.connect("dbname='camelot' host='localhost'")
         except:
-            exit("I am unable to connect to the database")
+            exit("Unable to connect to the database")
 
         return conn
 
@@ -30,20 +30,34 @@ class Camelot_Database():
     def create_account(self, username, password):
         conn = self.make_connection()
         cur = conn.cursor()
+        error = None
 
-        try:
-            cur.execute('''INSERT INTO "USER" VALUES ('{}', '{}')'''.format(username, password))
-            self.commit_and_close_connection(conn)
-        except:
+        # Makes sure the username isn't already taken
+        cur.execute('''
+        SELECT userid
+        FROM "USER"
+        WHERE userid='{}'
+        '''.format(username))
 
+        if cur.rowcount:
+            error = "That username is already taken."
+
+        # Checks the lengths of the username & password
+        elif len(username) > 20 or len(username) < 1:
+            error = "The username isn't of the correct length (0 < len(username) <= 20)."
+        elif len(password) > 20 or len(username) < 1:
+            error = "The password isn't of the correct length (0 < len(password) <= 20)."
+
+        # If any error occured
+        if error:
             self.commit_and_close_connection(conn)
-            # NOTE: The client will need to do checks to make sure the username
-            #       & password are of the correct length, otherwise they will
-            #       recieve an error that the says 'username is already taken'
-            #       when the username & password have incorrect lengths.
             return json.dumps({
-                "error": "That username is already taken."
+                "error": error
             })
+
+        # If no errors occured, create the account
+        cur.execute('''INSERT INTO "USER" VALUES ('{}', '{}')'''.format(username, password))
+        self.commit_and_close_connection(conn)
 
     ## Checks that the username & password are a match in the database
     #
@@ -65,7 +79,7 @@ class Camelot_Database():
         if not rows:
             self.commit_and_close_connection(conn)
             return json.dumps({
-                "error": "The username and/or password do not exist in the database."
+                "error": "The username/password combination do not exist in the database."
             }, indent=4)
 
         # TODO IH 3-19: This should probably be in its own function
@@ -126,11 +140,107 @@ class Camelot_Database():
     def add_channels_to_user_info(self, username, channels):
         conn = self.make_connection()
         cur = conn.cursor()
+
         for channel in channels:
             # TODO ZW 3-20: Need to add an error handler for if the user has already joined
             # a channel, and is trying to join it again.
-
             cur.execute('''INSERT INTO "CHANNELS_JOINED" VALUES ('{}', '{}')'''.format(username, channel))
+
+        self.commit_and_close_connection(conn)
+
+    ## Creates a channel in the database
+    #
+    # @param self The object pointer
+    # @param channel_name The name of the channel to be created
+    # @param admin The username of the creator of the channel
+    # @return A JSON object containing an error if there is one, none if successful
+    def create_channel(self, channel_name, admin):
+        conn = self.make_connection()
+        cur = conn.cursor()
+
+        if len(channel_name) > 40 or len(channel_name) < 1:
+            self.commit_and_close_connection(conn)
+            return json.dumps({
+                "error": "The name of the channel isn't of the correct length (0 < len(channel_name) <= 40)."
+            }, indent=4)
+
+        cur.execute('''INSERT INTO "CHANNEL" VALUES ('{}', '{}')'''.format(channel_name, admin))
+        self.commit_and_close_connection(conn)
+
+
+    ## Removes a channel from the database
+    #
+    # @param self The object pointer
+    # @param channel_name The channel to be removed
+    # @param user The user calling the function
+    # @return On success returns None, else returns a json object containing the error
+    def delete_channel(self, channel_name, user):
+        conn = self.make_connection()
+        cur = conn.cursor()
+
+        # Checks if the channel exists in the database
+        cur.execute('''
+        SELECT channelid
+        FROM "CHANNEL"
+        WHERE channelid='{}'
+        '''.format(channel_name))
+
+        if cur.rowcount != 1:
+            self.commit_and_close_connection(conn)
+            return json.dumps({
+                "error": "The specified channel was not found."
+            }, indent=4)
+
+        # Checks if the user trying to delete the channel, is the admin of the channel
+        cur.execute('''
+        SELECT channelid
+        FROM "CHANNEL"
+        WHERE channelid='{}' AND admin='{}'
+        '''.format(channel_name, user))
+
+        if cur.rowcount != 1:
+            self.commit_and_close_connection(conn)
+            return json.dumps({
+                "error": "The user trying to delete the channel isn't the admin of the channel."
+            }, indent=4)
+
+        # If no errors occur, delete the channel
+        cur.execute('''
+        DELETE FROM "CHANNEL"
+        WHERE channelid='{}'
+        '''.format(channel_name))
+
+        self.commit_and_close_connection(conn)
+
+    ## Removes a user from the database
+    #
+    # @param self The object pointer
+    # @param username The username to be deleted
+    # @param password The password to be associated with the username
+    # @return On success returns None, else returns a JSON object containing the error
+    def delete_account(self, username, password):
+        conn = self.make_connection()
+        cur = conn.cursor()
+
+        # Check for username and password are in database
+        cur.execute('''
+        SELECT userid
+        FROM "USER"
+        WHERE userid='{}' AND password='{}'
+        '''.format(username, password))
+
+        if cur.rowcount != 1:
+            self.commit_and_close_connection(conn)
+            return json.dumps({
+                "error": "The username/password combination is incorrect."
+            })
+
+        # If no errors occur, delete the account
+        cur.execute('''
+        DELETE FROM "USER"
+        WHERE userid='{}'
+        '''.format(username))
+
         self.commit_and_close_connection(conn)
 
     ## Creates tables in database
