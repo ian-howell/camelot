@@ -41,6 +41,62 @@ def test_client_new_message():
         }
     }, indent=4)
 
+def test_client_create_channel():
+    return json.dumps({
+        "create_channel": "some new channel name"
+    }, indent=4)
+
+def test_client_delete_channel():
+    return json.dumps({
+        "delete_channel": "some new channel name"
+    }, indent=4)
+
+def test_client_delete_account():
+    return json.dumps({
+        "delete_account": {
+            "username": "zach",
+            "password": "pass"
+        }
+    }, indent=4)
+
+def delete_account(mydb, client_request):
+    # Check that no one is logged in under the given username
+    # Checks what channels the user is an admin of because those channels
+    # will be deleted; these channels need to be known so that users can
+    # be notified of channels that are deleted.
+
+    try:
+        username = client_request['delete_account']['username']
+        password = client_request['delete_account']['password']
+    except KeyError:
+        return json.dumps({
+            "error": "The JSON file sent didn't contain valid information."
+        }, indent=4)
+
+    return mydb.delete_account(username, password)
+
+def delete_channel(mydb, client_request):
+    channel_name = client_request['delete_channel']
+
+    # Eventaully, when the server is working, you'll grab the user making the request
+    # and set it to the admin. A check will also need to be done to make sure that
+    # a session has a user
+    #user = session.user
+    user = "username" #Temporary
+
+    return mydb.delete_channel(channel_name, user)
+
+def create_channel(mydb, client_request):
+    channel_name = client_request['create_channel']
+
+    # Eventaully, when the server is working, you'll grab the user making the request
+    # and set it to the admin. A check will also need to be done to make sure that
+    # a session has a user
+    #admin = session.user
+    admin = "username" #Temporary
+
+    return mydb.create_channel(channel_name, admin)
+
 # NOTE: Some variable will also need to be passed to identify which
 #       user is trying to join a channel. I'm guessing this variable
 #       will be created when the client logs into the server.
@@ -64,7 +120,7 @@ def join_channel(mydb, client_request):
             }, indent=4)
 
     # Connects the user to the specified channels and stores the information in the database
-    result = mydb.add_channels_to_user_info(username, channels_user_wants_to_join)
+    mydb.add_channels_to_user_info(username, channels_user_wants_to_join)
 
 def login(mydb, client_request):
     # Makes sure the user is sending valid information
@@ -78,7 +134,7 @@ def login(mydb, client_request):
     else:
         return json.dumps({
             "error": "The JSON file sent didn't contain valid information."
-        })
+        }, indent=4)
 
 def create_account(mydb, client_request):
     if client_request['create_account']['username'] and client_request['create_account']['password']:
@@ -91,7 +147,7 @@ def create_account(mydb, client_request):
     else:
         return json.dumps({
             "error": "The JSON file sent didn't contain valid information."
-        })
+        }, indent=4)
 
 def send_to_client(response):
     print("This is what will get sent to the client:\n")
@@ -103,10 +159,13 @@ if __name__ == '__main__':
     mydb.create_tables('tables.sql')
     #mydb.insert_data('data.sql')
 
-    #client_request = json.loads(test_client_create_account())
+    client_request = json.loads(test_client_create_account())
     #client_request = json.loads(test_client_login())
     #client_request = json.loads(test_client_join_channels())
-    client_request = json.loads(test_client_new_message())
+    #client_request = json.loads(test_client_new_message())
+    #client_request = json.loads(test_client_create_channel())
+    #client_request = json.loads(test_client_delete_channel())
+    #client_request = json.loads(test_client_delete_account())
 
     for operation in client_request.keys():
         if operation == 'create_account':
@@ -119,6 +178,14 @@ if __name__ == '__main__':
             # TODO ZW 3-20: Need to add a check that makes sure a client is only getting sent
             # messages if the user is a part of the specified channel.
             response = json.dumps(client_request, indent=4)
+        elif operation == 'create_channel':
+            response = create_channel(mydb, client_request)
+        elif operation == 'delete_channel':
+            # TODO zw 4-1: Need to add a way to send a message to all users if a channel has
+            # been deleted.
+            response = delete_channel(mydb, client_request)
+        elif operation == 'delete_account':
+            response = delete_account(mydb, client_request)
         else:
             response = json.dumps({
                 "error": "The JSON file sent didn't contain valid information."
@@ -126,23 +193,3 @@ if __name__ == '__main__':
 
     if response:
         send_to_client(response)
-
-    '''
-    # All of these choices have been added for the purpose of checking and making
-    # sure the database was updating correctly.
-
-    choice = input('Would you like to add tables to the database? (y = yes, n = no)')
-
-    if (choice == 'y' or choice == 'yes'):
-        mydb.create_tables('tables.sql')
-
-    choice = input('Would you like to add data to the database? (y = yes, n = no)')
-
-    if (choice == 'y' or choice == 'yes'):
-        mydb.insert_data('data.sql')
-
-    choice = input('Would you like to empty the tables in the database? (y = yes, n = no)')
-
-    if (choice == 'y' or choice == 'yes'):
-        mydb.empty_tables()
-    '''
