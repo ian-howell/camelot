@@ -84,7 +84,7 @@ def test_client_change_password():
             "current_password": "password",
             "new_password": "their new password"
         }
-    })
+    }, indent=4)
 
 def send_to_client(response):
     print("This is what will get sent to the client:\n")

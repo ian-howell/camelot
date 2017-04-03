@@ -10,9 +10,13 @@ import json
 # Pytest-cov: Used for seeing how much code coverage there is                                    #
 # INSTALL: pytest-cov (for me I installed it via command-line using: "pip3 install pytest-cov")  #
 # RUN: Just type "py.test --cov-report term-missing --cov=./" in the command-line while in       #
-#      the same directory as this file                                                           #    
+#      the same directory as this file                                                           #
 ##################################################################################################
 
+############ GENERAL NOTES ##############
+# 'json.dumps' encodes the data into json
+# 'json.loads' decodes the json data
+#########################################
 
 def test_setup():
     server = Camelot_Server()
@@ -461,12 +465,22 @@ def test_get_users_in_channel_success():
         "get_users_in_channel": "Client Team"
     }, indent=4))
 
+    expected_response = json.dumps({
+        "users_in_channel": {
+            "channel": "Client Team",
+            "users": [
+                "username",
+                "user2"
+            ]
+        }
+    }, indent=4)
+
     mydb.create_account("username", "password")
     mydb.create_account("user2", "password")
+    mydb.create_channel("Client Team", None)
     mydb.add_channels_to_user_info("username", ["Client Team"])
     mydb.add_channels_to_user_info("user2", ["Client Team"])
 
-    expected_response = mydb.get_users_in_channel("Client Team")
     result = server.get_users_in_channel(mydb, client_request)
 
     assert expected_response == result

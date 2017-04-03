@@ -2,6 +2,11 @@ import psycopg2
 from sys import exit
 import json
 
+############ GENERAL NOTES ##############
+# 'json.dumps' encodes the data into json
+# 'json.loads' decodes the json data
+#########################################
+
 ## Camelot_Database
 #
 #  This class provides an interface with the Camelot Database

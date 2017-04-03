@@ -1,5 +1,10 @@
 import json
 
+############ GENERAL NOTES ##############
+# 'json.dumps' encodes the data into json
+# 'json.loads' decodes the json data
+#########################################
+
 class Camelot_Server():
 
     def change_password(self, mydb, client_request):
