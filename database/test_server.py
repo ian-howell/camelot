@@ -9,7 +9,8 @@ import json
 #                                                                                                #
 # Pytest-cov: Used for seeing how much code coverage there is                                    #
 # INSTALL: pytest-cov (for me I installed it via command-line using: "pip3 install pytest-cov")  #
-# RUN: Just type "py.test --cov=./" in the command-line while in the same directory as this file #
+# RUN: Just type "py.test --cov-report term-missing --cov=./" in the command-line while in       #
+#      the same directory as this file                                                           #    
 ##################################################################################################
 
 
@@ -467,6 +468,110 @@ def test_get_users_in_channel_success():
 
     expected_response = mydb.get_users_in_channel("Client Team")
     result = server.get_users_in_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_leave_channel_success():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "leave_channel": "Client Team"
+    }, indent=4))
+
+    expected_response = None
+
+    mydb.create_account("username", "password")
+    mydb.add_channels_to_user_info("username", ["Client Team"])
+
+    result = server.leave_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_change_password_invalid_json():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "change_password": {
+            "username_invalid": "username",
+            "current_password": "password",
+            "new_password": "their new password"
+        }
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The JSON file sent didn't contain valid information."
+    }, indent=4)
+
+    result = server.change_password(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_change_password_account_does_not_exist():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "change_password": {
+            "username": "username",
+            "current_password": "password",
+            "new_password": "their new password"
+        }
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The username/password combination do not exist in the database."
+    }, indent=4)
+
+    result = server.change_password(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_change_password_invalid_new_password():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "change_password": {
+            "username": "username",
+            "current_password": "password",
+            "new_password": "their new password--------------------------"
+        }
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The password isn't of the correct length (0 < len(password) <= 20)."
+    }, indent=4)
+
+    mydb.create_account("username", "password")
+
+    result = server.change_password(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_change_password_success():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "change_password": {
+            "username": "username",
+            "current_password": "password",
+            "new_password": "their new password"
+        }
+    }, indent=4))
+
+    expected_response = None
+
+    mydb.create_account("username", "password")
+
+    result = server.change_password(mydb, client_request)
 
     assert expected_response == result
     mydb.empty_tables()

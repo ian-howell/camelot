@@ -21,7 +21,7 @@ class Camelot_Server():
         # and set it to the admin. A check will also need to be done to make sure that
         # a session has a user
         #user = session.user
-        user = "zach" #Temporary
+        user = "username" #Temporary
 
         return mydb.leave_channel(channel_name, user)
 

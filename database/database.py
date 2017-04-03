@@ -8,7 +8,7 @@ import json
 class Camelot_Database():
 
     def __init__(self):
-        self.create_tables('tables.sql')
+        self.insert_data('tables.sql')
 
     ## Makes a connection to database
     #
@@ -338,18 +338,6 @@ class Camelot_Database():
                 "error": "The specified channel was not found."
             }, indent=4)
 
-        self.commit_and_close_connection(conn)
-
-    ## Creates tables in database
-    #
-    #  @param self The object pointer
-    #  @param filename The SQL file to pull table generation from
-    def create_tables(self, filename):
-        # TODO IH 3-19: We should consider combining the following 2 functions into one.
-        # Maybe something like `execute_sql_script`?
-        conn = self.make_connection()
-        cur = conn.cursor()
-        cur.execute(open(filename, 'r').read())
         self.commit_and_close_connection(conn)
 
     ## Readies initial data for database
