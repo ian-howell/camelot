@@ -2,13 +2,18 @@ import psycopg2
 from sys import exit
 import json
 
+############ GENERAL NOTES ##############
+# 'json.dumps' encodes the data into json
+# 'json.loads' decodes the json data
+#########################################
+
 ## Camelot_Database
 #
 #  This class provides an interface with the Camelot Database
 class Camelot_Database():
 
     def __init__(self):
-        pass
+        self.insert_data('tables.sql')
 
     ## Makes a connection to database
     #
@@ -40,9 +45,11 @@ class Camelot_Database():
         '''.format(username))
 
         if cur.rowcount:
-            error = "That username is already taken."
+            error = json.dumps({
+                "error": "That username is already taken."
+            }, indent=4)
         else:
-            error = validate_username_password(username, password)
+            error = self.validate_username_password(username, password)
 
         if error:
             return error
@@ -73,7 +80,7 @@ class Camelot_Database():
             self.commit_and_close_connection(conn)
             return json.dumps({
                 "error": error
-            })
+            }, indent=4)
 
         self.commit_and_close_connection(conn)
 
@@ -148,10 +155,10 @@ class Camelot_Database():
 
     ## Creates a channel in the database
     #
-    # @param self The object pointer
-    # @param channel_name The name of the channel to be created
-    # @param admin The username of the creator of the channel
-    # @return A JSON object containing an error if there is one, none if successful
+    #  @param self The object pointer
+    #  @param channel_name The name of the channel to be created
+    #  @param admin The username of the creator of the channel
+    #  @return A JSON object containing an error if there is one, none if successful
     def create_channel(self, channel_name, admin):
         conn = self.make_connection()
         cur = conn.cursor()
@@ -162,32 +169,28 @@ class Camelot_Database():
                 "error": "The name of the channel isn't of the correct length (0 < len(channel_name) <= 40)."
             }, indent=4)
 
-        cur.execute('''INSERT INTO "CHANNEL" VALUES ('{}', '{}')'''.format(channel_name, admin))
+        # Used for checking if the admin value has been set
+        if admin:
+            cur.execute('''INSERT INTO "CHANNEL" VALUES ('{}', '{}')'''.format(channel_name, admin))
+        else:
+            cur.execute('''INSERT INTO "CHANNEL" VALUES ('{}', NULL)'''.format(channel_name))
         self.commit_and_close_connection(conn)
 
 
     ## Removes a channel from the database
     #
-    # @param self The object pointer
-    # @param channel_name The channel to be removed
-    # @param user The user calling the function
-    # @return On success returns None, else returns a json object containing the error
+    #  @param self The object pointer
+    #  @param channel_name The channel to be removed
+    #  @param user The user calling the function
+    #  @return On success returns None, else returns a json object containing the error
     def delete_channel(self, channel_name, user):
         conn = self.make_connection()
         cur = conn.cursor()
 
         # Checks if the channel exists in the database
-        cur.execute('''
-        SELECT channelid
-        FROM "CHANNEL"
-        WHERE channelid='{}'
-        '''.format(channel_name))
-
-        if cur.rowcount != 1:
-            self.commit_and_close_connection(conn)
-            return json.dumps({
-                "error": "The specified channel was not found."
-            }, indent=4)
+        error = self.check_channel_in_database(channel_name)
+        if error:
+            return error
 
         # Checks if the user trying to delete the channel, is the admin of the channel
         cur.execute('''
@@ -212,26 +215,19 @@ class Camelot_Database():
 
     ## Removes a user from the database
     #
-    # @param self The object pointer
-    # @param username The username to be deleted
-    # @param password The password to be associated with the username
-    # @return On success returns None, else returns a JSON object containing the error
+    #  @param self The object pointer
+    #  @param username The username to be deleted
+    #  @param password The password to be associated with the username
+    #  @return On success returns None, else returns a JSON object containing the error
     def delete_account(self, username, password):
         conn = self.make_connection()
         cur = conn.cursor()
 
         # Check for username and password are in database
-        cur.execute('''
-        SELECT userid
-        FROM "USER"
-        WHERE userid='{}' AND password='{}'
-        '''.format(username, password))
+        error = self.check_username_password_in_database(username, password)
 
-        if cur.rowcount != 1:
-            self.commit_and_close_connection(conn)
-            return json.dumps({
-                "error": "The username/password combination is incorrect."
-            })
+        if error:
+            return error
 
         # If no errors occur, delete the account
         cur.execute('''
@@ -243,12 +239,17 @@ class Camelot_Database():
 
     ## Gets all over the users in a specified channel
     #
-    # @param self The object pointer
-    # @param channel_name The channel specified for getting the users of
-    # @return On success returns None, else returns a JSON object containing the error
+    #  @param self The object pointer
+    #  @param channel_name The channel specified for getting the users of
+    #  @return On success returns None, else returns a JSON object containing the error
     def get_users_in_channel(self, channel_name):
         conn = self.make_connection()
         cur = conn.cursor()
+
+        # Checks if the channel exists in the database
+        error = self.check_channel_in_database(channel_name)
+        if error:
+            return error
 
         # Grabs the users for the specified channel
         cur.execute('''
@@ -321,16 +322,27 @@ class Camelot_Database():
 
         self.commit_and_close_connection(conn)
 
-    ## Creates tables in database
+    ## Checks if the channel exists in the database
     #
     #  @param self The object pointer
-    #  @param filename The SQL file to pull table generation from
-    def create_tables(self, filename):
-        # TODO IH 3-19: We should consider combining the following 2 functions into one.
-        # Maybe something like `execute_sql_script`?
+    #  @param channel_name The channel specified to check if it exists in the database
+    def check_channel_in_database(self, channel_name):
         conn = self.make_connection()
         cur = conn.cursor()
-        cur.execute(open(filename, 'r').read())
+
+        # Checks if the channel exists in the database
+        cur.execute('''
+        SELECT channelid
+        FROM "CHANNEL"
+        WHERE channelid='{}'
+        '''.format(channel_name))
+
+        if cur.rowcount != 1:
+            self.commit_and_close_connection(conn)
+            return json.dumps({
+                "error": "The specified channel was not found."
+            }, indent=4)
+
         self.commit_and_close_connection(conn)
 
     ## Readies initial data for database
@@ -346,7 +358,7 @@ class Camelot_Database():
     ## Empties all of the current database tables (created by create_tables)
     #
     #  @param self The object pointer
-    def empty_tables(self, ):
+    def empty_tables(self):
         conn = self.make_connection()
         cur = conn.cursor()
         cur.execute("""Truncate "USER", "CHANNEL", "CHANNELS_JOINED" CASCADE""")

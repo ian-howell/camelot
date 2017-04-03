@@ -1,5 +1,10 @@
 import json
 
+############ GENERAL NOTES ##############
+# 'json.dumps' encodes the data into json
+# 'json.loads' decodes the json data
+#########################################
+
 class Camelot_Server():
 
     def change_password(self, mydb, client_request):
@@ -21,18 +26,12 @@ class Camelot_Server():
         # and set it to the admin. A check will also need to be done to make sure that
         # a session has a user
         #user = session.user
-        user = "zach" #Temporary
+        user = "username" #Temporary
 
         return mydb.leave_channel(channel_name, user)
 
     def get_users_in_channel(self, mydb, client_request):
-        try:
-            channel_name = client_request['get_users_in_channel']
-        except KeyError:
-            return json.dumps({
-                "error": "The JSON file sent didn't contain valid information."
-            }, indent=4)
-
+        channel_name = client_request['get_users_in_channel']
         return mydb.get_users_in_channel(channel_name)
 
     def delete_account(self, mydb, client_request):
@@ -69,7 +68,8 @@ class Camelot_Server():
         # and set it to the admin. A check will also need to be done to make sure that
         # a session has a user
         #admin = session.user
-        admin = "username" #Temporary
+        #admin = "username" #Temporary
+        admin = None
 
         return mydb.create_channel(channel_name, admin)
 
@@ -80,12 +80,12 @@ class Camelot_Server():
 
         # For now, I'll assume with a local variable the client's username
         # Eventaully, this will come from session.user
-        username = 'zach'
+        username = 'username'
 
         # Makes sure there are channels for the user to join
-        current_channels_available = mydb.get_channels()
+        current_channels_available = json.loads(mydb.get_channels())
         if 'error' in current_channels_available.keys():
-            return current_channels_available
+            return json.dumps(current_channels_available, indent=4)
 
         channels_user_wants_to_join = [channel for channel in client_request['join_channel']]
 
@@ -101,33 +101,32 @@ class Camelot_Server():
 
     def login(self, mydb, client_request):
         # Makes sure the user is sending valid information
-        if client_request['login']['username'] and client_request['login']['password']:
+        try:
             client_username = client_request['login']['username']
             client_password = client_request['login']['password']
-
-            result = mydb.check_username_password_in_database(client_username, client_password)
-            if result:
-                return result
-            else:
-                return mydb.get_channels()
-
-        else:
+        except KeyError:
             return json.dumps({
                 "error": "The JSON file sent didn't contain valid information."
             }, indent=4)
+
+        result = mydb.check_username_password_in_database(client_username, client_password)
+        if result:
+            return result
+        else:
+            return mydb.get_channels()
 
     def create_account(self, mydb, client_request):
-        if client_request['create_account']['username'] and client_request['create_account']['password']:
+        try:
             client_username = client_request['create_account']['username']
             client_password = client_request['create_account']['password']
-
-            result = mydb.create_account(client_username, client_password)
-            if result:
-                return result
-        else:
+        except KeyError:
             return json.dumps({
                 "error": "The JSON file sent didn't contain valid information."
             }, indent=4)
 
+        return mydb.create_account(client_username, client_password)
+
     def new_message(self, mydb, client_request):
+        # Going to need to add a way to send the new message to the correct users
+
         return json.dumps(client_request, indent=4)
