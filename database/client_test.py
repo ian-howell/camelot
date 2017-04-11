@@ -1,7 +1,5 @@
-from database import Camelot_Database
-from server import Camelot_Server
+import socket
 import json
-
 
 ############ GENERAL NOTES ##############
 # 'json.dumps' encodes the data into json
@@ -13,7 +11,7 @@ def test_bad_json():
         "creating_channel": {
             "test":"asd"
         }
-    })
+    }, indent=4)
 
 def test_client_create_account():
     return json.dumps({
@@ -86,12 +84,60 @@ def test_client_change_password():
         }
     }, indent=4)
 
-def send_to_client(response):
-    print("This is what will get sent to the client:\n")
-    print(response)
-    print('')
-
 if __name__ == '__main__':
+    functions = {
+        'test_bad_json': test_bad_json,
+        'test_client_create_account': test_client_create_account,
+        'test_client_login': test_client_login,
+        'test_client_join_channel': test_client_join_channel,
+        'test_client_new_message': test_client_new_message,
+        'test_client_create_channel': test_client_create_channel,
+        'test_client_delete_channel': test_client_delete_channel,
+        'test_client_delete_account': test_client_delete_account,
+        'test_client_get_users_in_channel': test_client_get_users_in_channel,
+        'test_client_leave_channel': test_client_leave_channel,
+        'test_client_change_password': test_client_change_password
+    }
+
+    soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    soc.connect(("127.0.0.1", 12345))
+
+    connected = True
+    # Loops while the user is connected to the server
+    while connected:
+        error = None
+
+        # Loops until the user selects a function to use
+        while True:
+            # Gets user input on the server function to be used
+            client_request = input('Please enter a server function to use: (Type -h to get a list of server functions): \n')
+
+            # Outputs the functions the client can use on the server
+            if client_request == '-h':
+                print('')
+                for func in functions.keys():
+                    print('- {}'.format(func))
+                print('')
+
+            else:
+                break
+
+        try:
+            client_request = functions[client_request]()
+        except:
+            error = 'Invalid function given\n'
+
+        if error:
+            print(error)
+        else:
+            soc.send(client_request.encode("ascii")) # we must encode the string to bytes
+            result_bytes = soc.recv(4096) # the number means how the response can be in bytes
+            result_string = result_bytes.decode("ascii") # the return will be in bytes, so decode
+
+            print("Result from server is {}".format(result_string))
+
+
+    '''
     server = Camelot_Server()
     mydb = Camelot_Database()
     #mydb.insert_data('data.sql')
@@ -123,7 +169,4 @@ if __name__ == '__main__':
 
     # TODO zw 4-1: Need to add a way to send a message to all users if a channel has
     # been deleted.
-
-
-    if response:
-        send_to_client(response)
+    '''

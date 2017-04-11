@@ -13,10 +13,10 @@ import json
 #      the same directory as this file                                                           #
 ##################################################################################################
 
-############ GENERAL NOTES ##############
-# 'json.dumps' encodes the data into json
-# 'json.loads' decodes the json data
-#########################################
+############ GENERAL NOTES ################
+# 'json.dumps' encodes the data into json #
+# 'json.loads' decodes the json data      #
+###########################################
 
 def test_setup():
     server = Camelot_Server()
