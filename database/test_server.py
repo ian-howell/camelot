@@ -317,6 +317,24 @@ def test_create_channel_channel_name_incorrect_length():
     assert expected_response == result
     mydb.empty_tables()
 
+def test_create_channel_that_already_exists():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "create_channel": "Test Channel Name"
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The specified channel already exists in the database."
+    }, indent=4)
+
+    server.create_channel(mydb, client_request)
+    result = server.create_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
 def test_create_channel_success():
     server = Camelot_Server()
     mydb = Camelot_Database()

@@ -70,7 +70,7 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
 
             # Checks for new packages from the client
             client_request = self.recieve_json_package(my_socket, thread_name)
-
+            print('test')
             # If a new package was recieved from the client (and no errors occured with the package)
             if client_request:
 
@@ -84,7 +84,8 @@ class ThreadedTCPRequestHandler(socketserver.BaseRequestHandler):
                         }, indent=4)
 
                 if response:
-                    my_socket.sendall(bytes(response, 'ascii'))
+                    for socket in SOCKET_LIST:
+                        socket.sendall(bytes(response, 'ascii'))
 
 
     def validate_request_data(self, my_socket, thread_name):

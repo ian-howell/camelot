@@ -169,11 +169,17 @@ class Camelot_Database():
         conn = self.make_connection()
         cur = conn.cursor()
 
+        # Checks to make sure the channel is of the correct length
         if len(channel_name) > 40 or len(channel_name) < 1:
             self.commit_and_close_connection(conn)
             return json.dumps({
                 "error": "The name of the channel isn't of the correct length (0 < len(channel_name) <= 40)."
             }, indent=4)
+
+        # Checks if the channel already exists
+        error = self.check_channel_not_in_database(channel_name)
+        if error:
+            return error
 
         # Used for checking if the admin value has been set
         if admin:
@@ -348,7 +354,30 @@ class Camelot_Database():
             "success": "Successfully changed {}'s password.".format(username)
         }, indent=4)
 
-    ## Checks if the channel exists in the database
+    ## Checks if the channel DOES NOT exist in the database
+    #
+    #  @param self The object pointer
+    #  @param channel_name The channel specified to check if it exists in the database
+    def check_channel_not_in_database(self, channel_name):
+        conn = self.make_connection()
+        cur = conn.cursor()
+
+        # Checks if the channel exists in the database
+        cur.execute('''
+        SELECT channelid
+        FROM "CHANNEL"
+        WHERE channelid='{}'
+        '''.format(channel_name))
+
+        if cur.rowcount > 0:
+            self.commit_and_close_connection(conn)
+            return json.dumps({
+                "error": "The specified channel already exists in the database."
+            }, indent=4)
+
+        self.commit_and_close_connection(conn)
+
+    ## Checks if the channel DOES exist in the database
     #
     #  @param self The object pointer
     #  @param channel_name The channel specified to check if it exists in the database
