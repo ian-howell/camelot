@@ -57,6 +57,9 @@ class Camelot_Database():
         # If no errors occured, create the account
         cur.execute('''INSERT INTO "USER" VALUES ('{}', '{}')'''.format(username, password))
         self.commit_and_close_connection(conn)
+        return json.dumps({
+            "success": "Successfully created {}'s account.".format(username)
+        }, indent=4)
 
     ## Validates the username & password are of the correct length
     #
@@ -152,6 +155,9 @@ class Camelot_Database():
             cur.execute('''INSERT INTO "CHANNELS_JOINED" VALUES ('{}', '{}')'''.format(username, channel))
 
         self.commit_and_close_connection(conn)
+        return json.dumps({
+            "succes": "Successfully joined channels: {}.".format(channels)
+        }, indent=4)
 
     ## Creates a channel in the database
     #
@@ -174,8 +180,11 @@ class Camelot_Database():
             cur.execute('''INSERT INTO "CHANNEL" VALUES ('{}', '{}')'''.format(channel_name, admin))
         else:
             cur.execute('''INSERT INTO "CHANNEL" VALUES ('{}', NULL)'''.format(channel_name))
-        self.commit_and_close_connection(conn)
 
+        self.commit_and_close_connection(conn)
+        return json.dumps({
+            "success": "Successfully created channel: '{}'.".format(channel_name)
+        }, indent=4)
 
     ## Removes a channel from the database
     #
@@ -212,6 +221,9 @@ class Camelot_Database():
         '''.format(channel_name))
 
         self.commit_and_close_connection(conn)
+        return json.dumps({
+            "success": "Successfully deleted channel: '{}'.".format(channel_name)
+        }, indent=4)
 
     ## Removes a user from the database
     #
@@ -225,7 +237,6 @@ class Camelot_Database():
 
         # Check for username and password are in database
         error = self.check_username_password_in_database(username, password)
-
         if error:
             return error
 
@@ -236,6 +247,9 @@ class Camelot_Database():
         '''.format(username))
 
         self.commit_and_close_connection(conn)
+        return json.dumps({
+            "success": "Successfully deleted account: '{}'.".format(username)
+        }, indent=4)
 
     ## Gets all over the users in a specified channel
     #
@@ -277,11 +291,17 @@ class Camelot_Database():
     ## Makes the user leave the specified channel
     #
     #  @param self The object pointer
-    #  @param channel_name The channel specified that the user wants to leave_channel
+    #  @param channel_name The channel specified that the user wants to leave
     #  @param user The user who is wanting to leave a channel
     def leave_channel(self, channel_name, user):
         conn = self.make_connection()
         cur = conn.cursor()
+
+        # Checks if the channel exists in the database
+        error = self.check_channel_in_database(channel_name)
+        if error:
+            self.commit_and_close_connection(conn)
+            return error
 
         cur.execute('''
         DELETE FROM "CHANNELS_JOINED"
@@ -289,6 +309,9 @@ class Camelot_Database():
         '''.format(channel_name, user))
 
         self.commit_and_close_connection(conn)
+        return json.dumps({
+            "success": "{} successfully left the channel: '{}'.".format(user, channel_name)
+        }, indent=4)
 
     ## Allows the user to change their password
     #
@@ -321,6 +344,9 @@ class Camelot_Database():
         '''.format(new_password, username))
 
         self.commit_and_close_connection(conn)
+        return json.dumps({
+            "success": "Successfully changed {}'s password.".format(username)
+        }, indent=4)
 
     ## Checks if the channel exists in the database
     #

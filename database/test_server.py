@@ -115,7 +115,9 @@ def test_create_account_success():
         }
     }, indent=4))
 
-    expected_response = None
+    expected_response = json.dumps({
+        "success": "Successfully created username's account."
+    }, indent=4)
 
     result = server.create_account(mydb, client_request)
 
@@ -194,10 +196,13 @@ def test_login_success():
         }
     }, indent=4))
 
+    expected_response = json.dumps({
+        "channels": ["ChannelTest"]
+    }, indent=4)
+
     mydb.create_account("username", "password")
     mydb.create_channel("ChannelTest", "username")
 
-    expected_response = mydb.get_channels()
     result = server.login(mydb, client_request)
 
     assert expected_response == result
@@ -283,7 +288,9 @@ def test_join_channel_success():
         ]
     }, indent=4))
 
-    expected_response = None
+    expected_response = json.dumps({
+        "succes": "Successfully joined channels: ['Client Team', 'Server Team']."
+    }, indent=4)
 
     mydb.create_account("username", "password")
     mydb.create_channel("Client Team", "username")
@@ -318,7 +325,9 @@ def test_create_channel_success():
         "create_channel": "Test Channel Name"
     }, indent=4))
 
-    expected_response = None
+    expected_response = json.dumps({
+        "success": "Successfully created channel: 'Test Channel Name'."
+    }, indent=4)
 
     result = server.create_channel(mydb, client_request)
 
@@ -372,7 +381,9 @@ def test_delete_channel_success():
         "delete_channel": "TestChannel"
     }, indent=4))
 
-    expected_response = None
+    expected_response = json.dumps({
+        "success": "Successfully deleted channel: 'TestChannel'."
+    }, indent=4)
 
     mydb.create_account("username", "password")
     mydb.create_channel("TestChannel", "username")
@@ -432,7 +443,9 @@ def test_delete_account_success():
         }
     }, indent=4))
 
-    expected_response = None
+    expected_response = json.dumps({
+        "success": "Successfully deleted account: 'username'."
+    }, indent=4)
 
     mydb.create_account("username", "password")
     result = server.delete_account(mydb, client_request)
@@ -494,9 +507,12 @@ def test_leave_channel_success():
         "leave_channel": "Client Team"
     }, indent=4))
 
-    expected_response = None
+    expected_response = json.dumps({
+        "success": "username successfully left the channel: 'Client Team'."
+    }, indent=4)
 
     mydb.create_account("username", "password")
+    mydb.create_channel("Client Team", None)
     mydb.add_channels_to_user_info("username", ["Client Team"])
 
     result = server.leave_channel(mydb, client_request)
@@ -581,7 +597,9 @@ def test_change_password_success():
         }
     }, indent=4))
 
-    expected_response = None
+    expected_response = json.dumps({
+        "success": "Successfully changed username's password."
+    }, indent=4)
 
     mydb.create_account("username", "password")
 

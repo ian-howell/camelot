@@ -97,8 +97,9 @@ class Camelot_Server():
                 }, indent=4)
 
         # Connects the user to the specified channels and stores the information in the database
-        mydb.add_channels_to_user_info(username, channels_user_wants_to_join)
+        return mydb.add_channels_to_user_info(username, channels_user_wants_to_join)
 
+    # On success, return a list of channels available to the user to join
     def login(self, mydb, client_request):
         # Makes sure the user is sending valid information
         try:
