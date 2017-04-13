@@ -7,6 +7,19 @@ import json
 
 class Camelot_Server():
 
+    def __init__(self):
+        self.user = None
+
+    def login_required(func):
+        def call(self, mydb, client_request):
+            if self.user:
+                return func(self, mydb, client_request)
+            else:
+                return json.dumps({
+                    "error": "A user must be signed in to access this function."
+                }, indent=4)
+        return call
+
     def change_password(self, mydb, client_request):
         try:
             username = client_request['change_password']['username']
@@ -19,17 +32,12 @@ class Camelot_Server():
 
         return mydb.change_password(username, current_password, new_password)
 
+    @login_required
     def leave_channel(self, mydb, client_request):
         channel_name = client_request['leave_channel']
+        return mydb.leave_channel(channel_name, self.user)
 
-        # Eventaully, when the server is working, you'll grab the user making the request
-        # and set it to the admin. A check will also need to be done to make sure that
-        # a session has a user
-        #user = session.user
-        user = "username" #Temporary
-
-        return mydb.leave_channel(channel_name, user)
-
+    @login_required
     def get_users_in_channel(self, mydb, client_request):
         channel_name = client_request['get_users_in_channel']
         return mydb.get_users_in_channel(channel_name)
@@ -50,38 +58,18 @@ class Camelot_Server():
 
         return mydb.delete_account(username, password)
 
+    @login_required
     def delete_channel(self, mydb, client_request):
         channel_name = client_request['delete_channel']
+        return mydb.delete_channel(channel_name, self.user)
 
-        # Eventaully, when the server is working, you'll grab the user making the request
-        # and set it to the admin. A check will also need to be done to make sure that
-        # a session has a user
-        #user = session.user
-        user = "username" #Temporary
-
-        return mydb.delete_channel(channel_name, user)
-
+    @login_required
     def create_channel(self, mydb, client_request):
         channel_name = client_request['create_channel']
+        return mydb.create_channel(channel_name, self.user)
 
-        # Eventaully, when the server is working, you'll grab the user making the request
-        # and set it to the admin. A check will also need to be done to make sure that
-        # a session has a user
-        #admin = session.user
-        #admin = "username" #Temporary
-        admin = None
-
-        return mydb.create_channel(channel_name, admin)
-
-    # NOTE: Some variable will also need to be passed to identify which
-    #       user is trying to join a channel. I'm guessing this variable
-    #       will be created when the client logs into the server.
+    @login_required
     def join_channel(self, mydb, client_request):
-
-        # For now, I'll assume with a local variable the client's username
-        # Eventaully, this will come from session.user
-        username = 'username'
-
         # Makes sure there are channels for the user to join
         current_channels_available = json.loads(mydb.get_channels())
         if 'error' in current_channels_available.keys():
@@ -97,7 +85,7 @@ class Camelot_Server():
                 }, indent=4)
 
         # Connects the user to the specified channels and stores the information in the database
-        return mydb.add_channels_to_user_info(username, channels_user_wants_to_join)
+        return mydb.add_channels_to_user_info(self.user, channels_user_wants_to_join)
 
     # On success, return a list of channels available to the user to join
     def login(self, mydb, client_request):
@@ -114,6 +102,7 @@ class Camelot_Server():
         if result:
             return result
         else:
+            self.user = client_username
             return mydb.get_channels()
 
     def create_account(self, mydb, client_request):
@@ -127,7 +116,19 @@ class Camelot_Server():
 
         return mydb.create_account(client_username, client_password)
 
+    @login_required
     def new_message(self, mydb, client_request):
-        # Going to need to add a way to send the new message to the correct users
+        # Make sure the user sending the message, is sending it to channel that they are in themself
+        try:
+            client_username = client_request['new_message']['user']
+            channel_name = client_request['new_message']['channel_receiving_message']
+        except KeyError:
+            return json.dumps({
+                "error": "The JSON file sent didn't contain valid information."
+            }, indent=4)
+
+        error = mydb.new_message(client_username, channel_name)
+        if error:
+            return error
 
         return json.dumps(client_request, indent=4)

@@ -4,10 +4,9 @@ import json
 from server import Camelot_Server
 from database import Camelot_Database
 
-global MY_CLIENTS
-MY_CLIENTS = {}
-#global my_threads
-#my_threads = []
+
+my_clients = {}
+my_threads = []
 client_lock = threading.Lock()
 
 class ClientThread(threading.Thread):
@@ -15,22 +14,19 @@ class ClientThread(threading.Thread):
         threading.Thread.__init__(self)
         self.conn = conn
         self.addr = addr
+        self.server = Camelot_Server()
+        self.mydb = Camelot_Database()
 
     def run(self):
-        #global MY_CLIENTS
-        user = None
+        # Global keyword needed if your wanting to change the variable in a method
+        global my_clients
         connected = True
 
         # Get this client's thread
         cur_thread = threading.current_thread()
         thread_name = cur_thread.name
 
-        # Gives access to server functions and accessing the database
-        server = Camelot_Server()
-        mydb = Camelot_Database()
-
         while connected:
-
             # Checks for new packages from the client
             error, client_request = self.validate_request_data(thread_name)
 
@@ -41,16 +37,44 @@ class ClientThread(threading.Thread):
                 for operation in client_request.keys():
                     try:
                         with client_lock:
-                            response = getattr(server, operation)(mydb, client_request)
+                            response = getattr(self.server, operation)(self.mydb, client_request)
                     except AttributeError:
                         response = json.dumps({
                             "error": "The JSON file sent didn't contain valid information."
                         }, indent=4)
 
-                if response:
-                    with client_lock:
-                        for client_conn in MY_CLIENTS.values():
-                            client_conn.sendall(bytes(str(response), 'ascii'))
+                with client_lock:
+
+                    # Unload the JSON into a dictionary for usage
+                    check = json.loads(response)
+                    new_message = False
+
+                    # Check if JSON contains "new_message" key meaning the user wants to send a new message
+                    try:
+                        if check['new_message']:
+                            new_message = True
+
+                    # No new message, so just send back to the user who made the request
+                    except KeyError:
+                        self.conn.sendall(bytes(str(response), 'ascii'))
+
+                    if new_message:
+                        response_from_db = self.mydb.get_users_in_channel(check['new_message']['channel_receiving_message'])
+                        response_from_db = json.loads(response_from_db)
+
+                        try:
+                            if response_from_db['error']:
+                                response_from_db = json.dumps(response_from_db, indent=4)
+                                self.conn.sendall(bytes(str(response_from_db), 'ascii'))
+
+                        except KeyError:
+                            users_to_message = [user for user in response_from_db['users_in_channel']['users']]
+
+                            for client_thread in my_threads:
+                                print("test")
+                                if client_thread.server.user in users_to_message:
+                                    client_thread.conn.sendall(bytes(str(response), 'ascii'))
+
 
             #If an error occured
             else:
@@ -61,7 +85,7 @@ class ClientThread(threading.Thread):
 
                 except BrokenPipeError:
                     print("{} disconnected.".format(thread_name))
-                    MY_CLIENTS.pop(self.addr)
+                    my_clients.pop(self.addr)
                     client_lock.release()
                     return None
 
@@ -86,11 +110,12 @@ class ClientThread(threading.Thread):
 if __name__ == '__main__':
     host = '127.0.0.1'
     port = 12345
-    my_threads = []
 
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
     # this is for easy starting/killing the app
     soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
     soc.bind((host,port))
     soc.listen(10)
 
@@ -98,7 +123,7 @@ if __name__ == '__main__':
         # Accept new incoming clients
         while True:
             client_socket, addr = soc.accept()
-            MY_CLIENTS[addr] = client_socket
+            my_clients[addr] = client_socket
             print('Got a new connection from {}'.format(addr))
             new_client_thread = ClientThread(client_socket, addr)
             new_client_thread.daemon = True
@@ -108,7 +133,7 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print('Shutting down server...')
         client_lock.acquire()
-        for client in MY_CLIENTS.values():
+        for client in my_clients.values():
             client_request = json.dumps({
                 "connection": "Broke"
             }, indent=4)
@@ -116,7 +141,3 @@ if __name__ == '__main__':
         client_lock.release()
 
     soc.close()
-
-    # Join all threads
-    #for thread in my_threads:
-    #    thread.join()

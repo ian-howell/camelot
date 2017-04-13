@@ -14,6 +14,7 @@ class Camelot_Database():
 
     def __init__(self):
         self.insert_data('tables.sql')
+        self.insert_data('data.sql')
 
     ## Makes a connection to database
     #
@@ -397,6 +398,36 @@ class Camelot_Database():
             return json.dumps({
                 "error": "The specified channel was not found."
             }, indent=4)
+
+        self.commit_and_close_connection(conn)
+
+    def check_username_in_channel(self,username, channel_name):
+        conn = self.make_connection()
+        cur = conn.cursor()
+
+        # Checks if user is in specified channel
+        cur.execute('''
+        SELECT userid
+        FROM "CHANNELS_JOINED"
+        WHERE userid='{}' AND channelid='{}'
+        '''.format(username, channel_name))
+
+        if cur.rowcount != 1:
+            self.commit_and_close_connection(conn)
+            return json.dumps({
+                "error": "The user is trying to send a message to a channel they haven't joined yet."
+            }, indent=4)
+
+        self.commit_and_close_connection(conn)
+
+    def new_message(self, username, channel_name):
+        conn = self.make_connection()
+        cur = conn.cursor()
+
+        error = self.check_username_in_channel(username, channel_name)
+        if error:
+            self.commit_and_close_connection(conn)
+            return error
 
         self.commit_and_close_connection(conn)
 
