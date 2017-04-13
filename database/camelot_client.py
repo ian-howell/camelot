@@ -132,6 +132,16 @@ def change_password():
         }
     }, indent=4)
 
+def logged_in():
+    return json.dumps({
+        "This info doesn't matter; client shouldn't be able to access this function.": "blam"
+    }, indent=4)
+
+def __init__():
+    return json.dumps({
+        "This info doesn't matter; client shouldn't be able to access this function.": "blam"
+    }, indent=4)
+
 client_lock = threading.Lock()
 server_running = True
 

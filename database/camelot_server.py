@@ -16,6 +16,7 @@ class ClientThread(threading.Thread):
         self.addr = addr
         self.server = Camelot_Server()
         self.mydb = Camelot_Database()
+        self.unauthorized_function_calls = ['__init__', 'login_required']
 
     def run(self):
         # Global keyword needed if your wanting to change the variable in a method
@@ -36,6 +37,8 @@ class ClientThread(threading.Thread):
                 # Attempt to carry out the clients request
                 for operation in client_request.keys():
                     try:
+                        if operation in self.unauthorized_function_calls:
+                            raise AttributeError
                         with client_lock:
                             response = getattr(self.server, operation)(self.mydb, client_request)
                     except AttributeError:
