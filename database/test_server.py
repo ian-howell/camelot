@@ -230,6 +230,10 @@ def test_new_message():
         }
     }, indent=4)
 
+    mydb.create_account('username', 'password')
+    server, mydb = login(server, mydb, 'username', 'password')
+    mydb.add_channels_to_user_info('username', ['Client Team'])
+
     result = server.new_message(mydb, client_request)
 
     assert expected_response == result
@@ -249,6 +253,9 @@ def test_join_channel_no_channels_available():
     expected_response = json.dumps({
         "error": "No channels exist in the database."
     }, indent=4)
+
+    mydb.create_account('username', 'password')
+    server, mydb = login(server, mydb, 'username', 'password')
 
     result = server.join_channel(mydb, client_request)
 
@@ -270,8 +277,10 @@ def test_join_channel_that_doesnt_exist():
         "error": "The user is trying to join a channel that doesn't exist."
     }, indent=4)
 
-    mydb.create_account("username", "password")
+    mydb.create_account('username', 'password')
+    server, mydb = login(server, mydb, 'username', 'password')
     mydb.create_channel("TestChannel", "username")
+
     result = server.join_channel(mydb, client_request)
 
     assert expected_response == result
@@ -293,6 +302,7 @@ def test_join_channel_success():
     }, indent=4)
 
     mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
     mydb.create_channel("Client Team", "username")
     mydb.create_channel("Server Team", "username")
     result = server.join_channel(mydb, client_request)
@@ -312,6 +322,9 @@ def test_create_channel_channel_name_incorrect_length():
         "error": "The name of the channel isn't of the correct length (0 < len(channel_name) <= 40)."
     }, indent=4)
 
+    mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
+
     result = server.create_channel(mydb, client_request)
 
     assert expected_response == result
@@ -328,6 +341,9 @@ def test_create_channel_that_already_exists():
     expected_response = json.dumps({
         "error": "The specified channel already exists in the database."
     }, indent=4)
+
+    mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
 
     server.create_channel(mydb, client_request)
     result = server.create_channel(mydb, client_request)
@@ -347,6 +363,9 @@ def test_create_channel_success():
         "success": "Successfully created channel: 'Test Channel Name'."
     }, indent=4)
 
+    mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
+
     result = server.create_channel(mydb, client_request)
 
     assert expected_response == result
@@ -365,7 +384,9 @@ def test_delete_channel_channel_not_found():
     }, indent=4)
 
     mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
     mydb.create_channel("TestChannel", "username")
+
     result = server.delete_channel(mydb, client_request)
 
     assert expected_response == result
@@ -384,8 +405,10 @@ def test_delete_channel_user_not_authorized_to_delete_channel():
     }, indent=4)
 
     mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
     mydb.create_account("admin user", "password")
     mydb.create_channel("TestChannel", "admin user")
+
     result = server.delete_channel(mydb, client_request)
 
     assert expected_response == result
@@ -404,7 +427,9 @@ def test_delete_channel_success():
     }, indent=4)
 
     mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
     mydb.create_channel("TestChannel", "username")
+
     result = server.delete_channel(mydb, client_request)
 
     assert expected_response == result
@@ -483,6 +508,9 @@ def test_get_users_in_channel_channel_does_not_exist():
         "error": "The specified channel was not found."
     }, indent=4)
 
+    mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
+
     result = server.get_users_in_channel(mydb, client_request)
 
     assert expected_response == result
@@ -507,6 +535,7 @@ def test_get_users_in_channel_success():
     }, indent=4)
 
     mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
     mydb.create_account("user2", "password")
     mydb.create_channel("Client Team", None)
     mydb.add_channels_to_user_info("username", ["Client Team"])
@@ -530,6 +559,7 @@ def test_leave_channel_success():
     }, indent=4)
 
     mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
     mydb.create_channel("Client Team", None)
     mydb.add_channels_to_user_info("username", ["Client Team"])
 
@@ -625,3 +655,17 @@ def test_change_password_success():
 
     assert expected_response == result
     mydb.empty_tables()
+
+def login(server, mydb, username, password):
+    client_request = json.loads(json.dumps({
+        "login": {
+            "username": username,
+            "password": password,
+        }
+    }, indent=4))
+
+    # The login function needs to be called through the Camelot_Server class
+    # so that the 'self.user' variable can be set.
+    server.login(mydb, client_request)
+
+    return (server, mydb)

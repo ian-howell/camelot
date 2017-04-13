@@ -14,7 +14,6 @@ class Camelot_Database():
 
     def __init__(self):
         self.insert_data('tables.sql')
-        self.insert_data('data.sql')
 
     ## Makes a connection to database
     #

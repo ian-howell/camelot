@@ -108,6 +108,10 @@ class ClientThread(threading.Thread):
         return (error, request)
 
 if __name__ == '__main__':
+    # Add some initial channels to the database
+    mydb = Camelot_Database()
+    mydb.insert_data('data.sql')
+
     host = '127.0.0.1'
     port = 12345
 
