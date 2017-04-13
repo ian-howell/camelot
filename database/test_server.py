@@ -208,7 +208,29 @@ def test_login_success():
     assert expected_response == result
     mydb.empty_tables()
 
-def test_new_message():
+def test_new_message_not_logged_in():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "new_message": {
+            "channel_receiving_message": "Client Team",
+            "user": "username",
+            "timestamp": "2017-03-14 14:11:30",
+            "message": "the actual message that the user posted"
+        }
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "A user must be signed in to access this function."
+    }, indent=4)
+
+    result = server.new_message(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_new_message_success():
     server = Camelot_Server()
     mydb = Camelot_Database()
 
@@ -235,6 +257,26 @@ def test_new_message():
     mydb.add_channels_to_user_info('username', ['Client Team'])
 
     result = server.new_message(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_join_channel_not_logged_in():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "join_channel": [
+            "Client Team",
+            "Server Team"
+        ]
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "A user must be signed in to access this function."
+    }, indent=4)
+
+    result = server.join_channel(mydb, client_request)
 
     assert expected_response == result
     mydb.empty_tables()
@@ -310,6 +352,23 @@ def test_join_channel_success():
     assert expected_response == result
     mydb.empty_tables()
 
+def test_create_channel_not_logged_in():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "create_channel": "Test Channel Name with incorrect length-----------"
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "A user must be signed in to access this function."
+    }, indent=4)
+
+    result = server.create_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
 def test_create_channel_channel_name_incorrect_length():
     server = Camelot_Server()
     mydb = Camelot_Database()
@@ -367,6 +426,23 @@ def test_create_channel_success():
     server, mydb = login(server, mydb, 'username', 'password')
 
     result = server.create_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_delete_channel_not_logged_in():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "delete_channel": "Non-existent channel"
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "A user must be signed in to access this function."
+    }, indent=4)
+
+    result = server.delete_channel(mydb, client_request)
 
     assert expected_response == result
     mydb.empty_tables()
@@ -496,6 +572,23 @@ def test_delete_account_success():
     assert expected_response == result
     mydb.empty_tables()
 
+def test_get_users_in_channel_not_logged_in():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "get_users_in_channel": "Client Team"
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "A user must be signed in to access this function."
+    }, indent=4)
+
+    result = server.get_users_in_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
 def test_get_users_in_channel_channel_does_not_exist():
     server = Camelot_Server()
     mydb = Camelot_Database()
@@ -542,6 +635,23 @@ def test_get_users_in_channel_success():
     mydb.add_channels_to_user_info("user2", ["Client Team"])
 
     result = server.get_users_in_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_leave_channel_not_logged_in():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "leave_channel": "Client Team"
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "A user must be signed in to access this function."
+    }, indent=4)
+
+    result = server.leave_channel(mydb, client_request)
 
     assert expected_response == result
     mydb.empty_tables()
