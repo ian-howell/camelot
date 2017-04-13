@@ -4,6 +4,11 @@ import json
 from server import Camelot_Server
 from database import Camelot_Database
 
+global MY_CLIENTS
+MY_CLIENTS = {}
+#global my_threads
+#my_threads = []
+client_lock = threading.Lock()
 
 class ClientThread(threading.Thread):
     def __init__(self, conn, addr):
@@ -12,6 +17,7 @@ class ClientThread(threading.Thread):
         self.addr = addr
 
     def run(self):
+        #global MY_CLIENTS
         user = None
         connected = True
 
@@ -34,18 +40,32 @@ class ClientThread(threading.Thread):
                 # Attempt to carry out the clients request
                 for operation in client_request.keys():
                     try:
-                        response = getattr(server, operation)(mydb, client_request)
+                        with client_lock:
+                            response = getattr(server, operation)(mydb, client_request)
                     except AttributeError:
                         response = json.dumps({
                             "error": "The JSON file sent didn't contain valid information."
                         }, indent=4)
 
                 if response:
-                    self.conn.sendall(bytes(str(response), 'ascii'))
+                    with client_lock:
+                        for client_conn in MY_CLIENTS.values():
+                            client_conn.sendall(bytes(str(response), 'ascii'))
 
+            #If an error occured
             else:
-                self.conn.sendall(bytes(str(client_request), 'ascii'))
+                client_lock.acquire()
 
+                try:
+                    self.conn.sendall(bytes(str(client_request), 'ascii'))
+
+                except BrokenPipeError:
+                    print("{} disconnected.".format(thread_name))
+                    MY_CLIENTS.pop(self.addr)
+                    client_lock.release()
+                    return None
+
+                client_lock.release()
 
     def validate_request_data(self, thread_name):
         error = False
@@ -72,23 +92,31 @@ if __name__ == '__main__':
     # this is for easy starting/killing the app
     soc.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     soc.bind((host,port))
-    soc.listen(1)
+    soc.listen(10)
 
     try:
-
         # Accept new incoming clients
         while True:
             client_socket, addr = soc.accept()
+            MY_CLIENTS[addr] = client_socket
             print('Got a new connection from {}'.format(addr))
             new_client_thread = ClientThread(client_socket, addr)
+            new_client_thread.daemon = True
             my_threads.append(new_client_thread)
             new_client_thread.start()
 
     except KeyboardInterrupt:
         print('Shutting down server...')
-
-    # Join all threads
-    for thread in my_threads:
-        thread.join()
+        client_lock.acquire()
+        for client in MY_CLIENTS.values():
+            client_request = json.dumps({
+                "connection": "Broke"
+            }, indent=4)
+            client.sendall(bytes(str(client_request), 'ascii'))
+        client_lock.release()
 
     soc.close()
+
+    # Join all threads
+    #for thread in my_threads:
+    #    thread.join()

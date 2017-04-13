@@ -1,5 +1,6 @@
 import socket
 import json
+import threading
 
 ############ GENERAL NOTES ##############
 # 'json.dumps' encodes the data into json
@@ -84,6 +85,68 @@ def test_client_change_password():
         }
     }, indent=4)
 
+client_lock = threading.Lock()
+global SERVER_RUNNING
+SERVER_RUNNING = True
+
+class ClientRecvThread(threading.Thread):
+    def __init__(self, soc):
+        threading.Thread.__init__(self)
+        self.soc = soc
+
+    def run(self):
+        global SERVER_RUNNING
+
+        while True:
+            result_bytes = soc.recv(4096) # the number means how the response can be in bytes
+            result_string = json.loads(result_bytes.decode("ascii")) # the return will be in bytes, so decode
+
+            try:
+                if result_string['connection'] == 'Broke':
+                    print('Server connection has been broke.')
+                    SERVER_RUNNING = False
+                    return None
+            except KeyError:
+                print("Result from server is {}".format(result_string))
+
+class ClientSendThread(threading.Thread):
+    def __init__(self, soc):
+        threading.Thread.__init__(self)
+        self.soc = soc
+
+    def run(self):
+        connected = True
+        # Loops while the user is connected to the server
+        while connected:
+            error = None
+
+            # Loops until the user selects a function to use
+            while True:
+                # Gets user input on the server function to be used
+                client_request = input('Please enter a server function to use: (Type -h to get a list of server functions): \n')
+
+                # Outputs the functions the client can use on the server
+                if client_request == '-h':
+                    print('')
+                    for func in functions.keys():
+                        print('- {}'.format(func))
+                    print('')
+
+                else:
+                    break
+
+            try:
+                client_request = functions[client_request]()
+            except:
+                error = 'Invalid function given\n'
+
+            if error:
+                print(error)
+            else:
+                with client_lock:
+                    soc.send(client_request.encode("ascii")) # we must encode the string to bytes
+
+
 if __name__ == '__main__':
     functions = {
         'test_bad_json': test_bad_json,
@@ -102,40 +165,22 @@ if __name__ == '__main__':
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soc.connect(("127.0.0.1", 12345))
 
-    connected = True
-    # Loops while the user is connected to the server
-    while connected:
-        error = None
+    send_thread = ClientSendThread(soc)
+    send_thread.daemon = True
+    send_thread.start()
 
-        # Loops until the user selects a function to use
-        while True:
-            # Gets user input on the server function to be used
-            client_request = input('Please enter a server function to use: (Type -h to get a list of server functions): \n')
+    recv_thread = ClientRecvThread(soc)
+    recv_thread.daemon = True
+    recv_thread.start()
 
-            # Outputs the functions the client can use on the server
-            if client_request == '-h':
-                print('')
-                for func in functions.keys():
-                    print('- {}'.format(func))
-                print('')
+    try:
+        while SERVER_RUNNING:
+            pass
+    except KeyboardInterrupt:
+        pass
 
-            else:
-                break
-
-        try:
-            client_request = functions[client_request]()
-        except:
-            error = 'Invalid function given\n'
-
-        if error:
-            print(error)
-        else:
-            soc.send(client_request.encode("ascii")) # we must encode the string to bytes
-            result_bytes = soc.recv(4096) # the number means how the response can be in bytes
-            result_string = result_bytes.decode("ascii") # the return will be in bytes, so decode
-
-            print("Result from server is {}".format(result_string))
-
+    print('Closing client')
+    soc.close()
 
     '''
     server = Camelot_Server()
