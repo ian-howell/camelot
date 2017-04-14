@@ -131,9 +131,14 @@ def get_users_in_channel():
         "get_users_in_channel": "Client Team"
     }, indent=4)
 
-def leave_channel():
+def leave_channel_1():
     return json.dumps({
-        "leave_channel": "Client Team"
+        "leave_channel": "TestChannel1"
+    }, indent=4)
+
+def leave_channel_2():
+    return json.dumps({
+        "leave_channel": "TestChannel2"
     }, indent=4)
 
 def change_password():

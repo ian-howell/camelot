@@ -115,16 +115,45 @@ class ClientThread(threading.Thread):
                         except KeyError:
                             self.conn.sendall(bytes(str(response), 'ascii'))
 
-                        # Grab the threads that have a user logged in
-                        valid_threads = [thread for thread in my_threads if thread.server.user]
+                        if create_channel:
+                            # Grab the threads that have a user logged in
+                            valid_threads = [thread for thread in my_threads if thread.server.user]
 
-                        # Notify all users of the new channel created
-                        for client_thread in valid_threads:
-                            client_thread.conn.sendall(bytes(str(response), 'ascii'))
+                            # Notify all users of the new channel created
+                            for client_thread in valid_threads:
+                                client_thread.conn.sendall(bytes(str(response), 'ascii'))
+
+                    elif operation == 'join_channel':
+                        # Unload the JSON into a dictionary for usage
+                        check = json.loads(response)
+                        join_channel = False
+
+                        try:
+                            if check['channels_joined']:
+                                join_channel = True
+                        except KeyError:
+                            self.conn.sendall(bytes(str(response), 'ascii'))
+
+                        if join_channel:
+                            # Grab the threads that have a user logged in
+                            valid_threads = [thread for thread in my_threads if thread.server.user]
+
+                            print(check)
+
+                            # Notify all users of the new channel created
+                            for client_thread in valid_threads:
+                                for channel in check['channels_joined']:
+                                    if not client_thread.mydb.check_username_in_channel(client_thread.server.user, channel):
+                                        client_thread.conn.sendall(bytes(str(json.dumps({
+                                            "user_joined_channel": {
+                                                "message": "{} has joined the channel.".format(check['user']),
+                                                "user": check['user'],
+                                                "channel": channel
+                                            }
+                                        }, indent=4)), 'ascii'))
 
                     else:
                         self.conn.sendall(bytes(str(response), 'ascii'))
-
 
             #If an error occured
             else:

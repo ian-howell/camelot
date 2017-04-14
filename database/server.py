@@ -84,8 +84,13 @@ class Camelot_Server():
                     "error": "The user is trying to join a channel that doesn't exist."
                 }, indent=4)
 
-        # Connects the user to the specified channels and stores the information in the database
-        return mydb.add_channels_to_user_info(self.user, channels_user_wants_to_join)
+        if channels_user_wants_to_join:
+            # Connects the user to the specified channels and stores the information in the database
+            return mydb.add_channels_to_user_info(self.user, channels_user_wants_to_join)
+        else:
+            return json.dumps({
+                "error": "No channels were given for the user to join."
+            }, indent=4)
 
     # On success, return a list of channels available to the user to join
     def login(self, mydb, client_request):

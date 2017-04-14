@@ -156,7 +156,8 @@ class Camelot_Database():
 
         self.commit_and_close_connection(conn)
         return json.dumps({
-            "succes": "Successfully joined channels: {}.".format(channels)
+            "channels_joined": channels,
+            "user": "{}".format(username)
         }, indent=4)
 
     ## Creates a channel in the database
