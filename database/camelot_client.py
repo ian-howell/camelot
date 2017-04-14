@@ -63,30 +63,30 @@ def join_channel_2():
 def new_message_1():
     return json.dumps({
         "new_message": {
-            "channel_receiving_message": "Client Team",
-            "user": "username1",
+            "channel_receiving_message": "TestChannel1",
+            "user": "",
             "timestamp": "2017-03-14 14:11:30",
-            "message": "Message inside of `Client Team` channel"
+            "message": "Message inside of `TestChannel1` channel"
         }
     }, indent=4)
 
 def new_message_2():
     return json.dumps({
         "new_message": {
-            "channel_receiving_message": "TestChannel1",
-            "user": "username2",
+            "channel_receiving_message": "TestChannel2",
+            "user": "",
             "timestamp": "2017-03-14 14:11:30",
-            "message": "Message inside of `TestChannel1` channel"
+            "message": "Message inside of `TestChannel2` channel"
         }
     }, indent=4)
 
 def new_message_3():
     return json.dumps({
         "new_message": {
-            "channel_receiving_message": "TestChannel2",
-            "user": "username1",
+            "channel_receiving_message": "Client Team",
+            "user": "",
             "timestamp": "2017-03-14 14:11:30",
-            "message": "Message inside of `TestChannel2` channel"
+            "message": "Message inside of `Client Team` channel"
         }
     }, indent=4)
 
@@ -105,11 +105,24 @@ def delete_channel_1():
         "delete_channel": "TestChannel1"
     }, indent=4)
 
-def delete_account():
+def delete_channel_2():
+    return json.dumps({
+        "delete_channel": "TestChannel2"
+    }, indent=4)
+
+def delete_account_1():
     return json.dumps({
         "delete_account": {
-            "username": "zach",
-            "password": "pass"
+            "username": "username1",
+            "password": "password"
+        }
+    }, indent=4)
+
+def delete_account_2():
+    return json.dumps({
+        "delete_account": {
+            "username": "username2",
+            "password": "password"
         }
     }, indent=4)
 

@@ -132,8 +132,8 @@ class Camelot_Server():
     def new_message(self, mydb, client_request):
         # Make sure the user sending the message, is sending it to channel that they are in themself
         try:
-            client_username = client_request['new_message']['user']
             channel_name = client_request['new_message']['channel_receiving_message']
+            client_username = self.user
             timestamp = client_request['new_message']['timestamp']
             message = client_request['new_message']['message']
         except KeyError:
@@ -145,7 +145,14 @@ class Camelot_Server():
         if error:
             return error
 
-        return json.dumps(client_request, indent=4)
+        return json.dumps({
+            "new_message": {
+                "channel_receiving_message": channel_name,
+                "user": client_username,
+                "timestamp": timestamp,
+                "message": message
+            }
+        }, indent=4)
 
     # Gets the channels that the specified user is a part of
     @login_required

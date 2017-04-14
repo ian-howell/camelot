@@ -71,7 +71,10 @@ class ClientThread(threading.Thread):
                             except KeyError:
                                 users_to_message = [user for user in users_to_notify['users_in_channel']['users']]
 
-                                for client_thread in my_threads:
+                                # Grab the threads that have a user logged in
+                                valid_threads = [thread for thread in my_threads if thread.server.user]
+
+                                for client_thread in valid_threads:
                                     if client_thread.server.user in users_to_message:
                                         client_thread.conn.sendall(bytes(str(response), 'ascii'))
 
@@ -89,13 +92,35 @@ class ClientThread(threading.Thread):
                         if delete_channel:
                             users_to_notify = check['users_in_channel']['users']
 
-                            response = json.dumps({
-                                "channel_deleted": "The channel `{}` has been deleted.".format(check['users_in_channel']['channel'])
-                            }, indent=4)
+                            if users_to_notify:
+                                response = json.dumps({
+                                    "channel_deleted": "The channel `{}` has been deleted.".format(check['users_in_channel']['channel'])
+                                }, indent=4)
 
-                            for client_thread in my_threads:
-                                if client_thread.server.user in users_to_notify:
-                                    client_thread.conn.sendall(bytes(str(response), 'ascii'))
+                                # Grab the threads that have a user logged in
+                                valid_threads = [thread for thread in my_threads if thread.server.user]
+
+                                for client_thread in valid_threads:
+                                    if client_thread.server.user in users_to_notify:
+                                        client_thread.conn.sendall(bytes(str(response), 'ascii'))
+
+                    elif operation == 'create_channel':
+                        # Unload the JSON into a dictionary for usage
+                        check = json.loads(response)
+                        create_channel = False
+
+                        try:
+                            if check['channel_created']:
+                                create_channel = True
+                        except KeyError:
+                            self.conn.sendall(bytes(str(response), 'ascii'))
+
+                        # Grab the threads that have a user logged in
+                        valid_threads = [thread for thread in my_threads if thread.server.user]
+
+                        # Notify all users of the new channel created
+                        for client_thread in valid_threads:
+                            client_thread.conn.sendall(bytes(str(response), 'ascii'))
 
                     else:
                         self.conn.sendall(bytes(str(response), 'ascii'))

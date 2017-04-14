@@ -169,17 +169,17 @@ class Camelot_Database():
         conn = self.make_connection()
         cur = conn.cursor()
 
+        # Checks if the channel already exists
+        error = self.check_channel_not_in_database(channel_name)
+        if error:
+            return error
+
         # Checks to make sure the channel is of the correct length
         if len(channel_name) > 40 or len(channel_name) < 1:
             self.commit_and_close_connection(conn)
             return json.dumps({
                 "error": "The name of the channel isn't of the correct length (0 < len(channel_name) <= 40)."
             }, indent=4)
-
-        # Checks if the channel already exists
-        error = self.check_channel_not_in_database(channel_name)
-        if error:
-            return error
 
         # Used for checking if the admin value has been set
         if admin:
@@ -189,7 +189,7 @@ class Camelot_Database():
 
         self.commit_and_close_connection(conn)
         return json.dumps({
-            "success": "Successfully created channel: '{}'.".format(channel_name)
+            "channel_created": "A new channel has been created: '{}'.".format(channel_name)
         }, indent=4)
 
     ## Removes a channel from the database
@@ -220,7 +220,7 @@ class Camelot_Database():
                 "error": "The user trying to delete the channel isn't the admin of the channel."
             }, indent=4)
 
-        users_in_channel = self.get_users_in_channel(channel_name)
+        users_in_channel = json.loads(self.get_users_in_channel(channel_name))
 
         # If no errors occur, delete the channel
         cur.execute('''
@@ -228,8 +228,13 @@ class Camelot_Database():
         WHERE channelid='{}'
         '''.format(channel_name))
 
+        if not users_in_channel['users_in_channel']['users']:
+            users_in_channel = json.dumps({
+                "success": "{} was successfully deleted. (No users found in channel as well).".format(channel_name)
+            }, indent=4)
+
         self.commit_and_close_connection(conn)
-        return users_in_channel
+        return json.dumps(users_in_channel, indent=4)
 
     ## Removes a user from the database
     #
@@ -369,7 +374,7 @@ class Camelot_Database():
         WHERE channelid='{}'
         '''.format(channel_name))
 
-        if cur.rowcount > 0:
+        if cur.rowcount == 1:
             self.commit_and_close_connection(conn)
             return json.dumps({
                 "error": "The specified channel already exists in the database."
@@ -400,7 +405,7 @@ class Camelot_Database():
 
         self.commit_and_close_connection(conn)
 
-    def check_username_in_channel(self,username, channel_name):
+    def check_username_in_channel(self, username, channel_name):
         conn = self.make_connection()
         cur = conn.cursor()
 
