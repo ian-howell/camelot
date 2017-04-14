@@ -230,6 +230,59 @@ def test_new_message_not_logged_in():
     assert expected_response == result
     mydb.empty_tables()
 
+def test_new_message_invalid_json():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "new_message": {
+            "channel_receiving_": "Client Team",
+            "user": "username",
+            "timestamp": "2017-03-14 14:11:30",
+            "message": "the actual message that the user posted"
+        }
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The JSON file sent didn't contain valid information."
+    }, indent=4)
+
+    mydb.create_account('username', 'password')
+    server, mydb = login(server, mydb, 'username', 'password')
+    mydb.create_channel('Client Team', None)
+    mydb.add_channels_to_user_info('username', ['Client Team'])
+
+    result = server.new_message(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_new_message_user_cant_send_message_to_channel_theyre_not_in():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "new_message": {
+            "channel_receiving_message": "Client Team",
+            "user": "username",
+            "timestamp": "2017-03-14 14:11:30",
+            "message": "the actual message that the user posted"
+        }
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The user is trying to send a message to a channel they haven't joined yet."
+    }, indent=4)
+
+    mydb.create_account('username', 'password')
+    server, mydb = login(server, mydb, 'username', 'password')
+    mydb.create_channel('Client Team', None)
+
+    result = server.new_message(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
 def test_new_message_success():
     server = Camelot_Server()
     mydb = Camelot_Database()
@@ -254,6 +307,7 @@ def test_new_message_success():
 
     mydb.create_account('username', 'password')
     server, mydb = login(server, mydb, 'username', 'password')
+    mydb.create_channel('Client Team', None)
     mydb.add_channels_to_user_info('username', ['Client Team'])
 
     result = server.new_message(mydb, client_request)
@@ -656,6 +710,26 @@ def test_leave_channel_not_logged_in():
     assert expected_response == result
     mydb.empty_tables()
 
+def test_leave_channel_channel_does_not_exist():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "leave_channel": "Client Team"
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The specified channel was not found."
+    }, indent=4)
+
+    mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
+
+    result = server.leave_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
 def test_leave_channel_success():
     server = Camelot_Server()
     mydb = Camelot_Database()
@@ -762,6 +836,43 @@ def test_change_password_success():
     mydb.create_account("username", "password")
 
     result = server.change_password(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_logout_not_logged_in():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "logout": "logout"
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "A user must be signed in to access this function."
+    }, indent=4)
+
+    result = server.logout(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_logout_success():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "logout": "logout"
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "success": "username has successfully logged out."
+    }, indent=4)
+
+    mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
+
+    result = server.logout(mydb, client_request)
 
     assert expected_response == result
     mydb.empty_tables()

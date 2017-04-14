@@ -142,6 +142,11 @@ def __init__():
         "This info doesn't matter; client shouldn't be able to access this function.": "blam"
     }, indent=4)
 
+def logout():
+    return json.dumps({
+        "logout":"logout"
+    }, indent=4)
+
 client_lock = threading.Lock()
 server_running = True
 

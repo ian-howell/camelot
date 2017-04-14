@@ -117,11 +117,25 @@ class Camelot_Server():
         return mydb.create_account(client_username, client_password)
 
     @login_required
+    def logout(self, mydb, client_request):
+        # Don't need to check the value of the key in the dictionary, if the
+        # key "logout" existed, then that's all that is needed.
+
+        temp = self.user
+        self.user = None
+        return json.dumps({
+            "success": "{} has successfully logged out.".format(temp)
+        }, indent=4)
+
+
+    @login_required
     def new_message(self, mydb, client_request):
         # Make sure the user sending the message, is sending it to channel that they are in themself
         try:
             client_username = client_request['new_message']['user']
             channel_name = client_request['new_message']['channel_receiving_message']
+            timestamp = client_request['new_message']['timestamp']
+            message = client_request['new_message']['message']
         except KeyError:
             return json.dumps({
                 "error": "The JSON file sent didn't contain valid information."
