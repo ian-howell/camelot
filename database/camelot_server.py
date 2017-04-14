@@ -48,35 +48,57 @@ class ClientThread(threading.Thread):
 
                 with client_lock:
 
-                    # Unload the JSON into a dictionary for usage
-                    check = json.loads(response)
-                    new_message = False
-
-                    # Check if JSON contains "new_message" key meaning the user wants to send a new message
-                    try:
-                        if check['new_message']:
-                            new_message = True
-
-                    # No new message, so just send back to the user who made the request
-                    except KeyError:
-                        self.conn.sendall(bytes(str(response), 'ascii'))
-
-                    if new_message:
-                        response_from_db = self.mydb.get_users_in_channel(check['new_message']['channel_receiving_message'])
-                        response_from_db = json.loads(response_from_db)
+                    if operation == 'new_message':
+                        # Unload the JSON into a dictionary for usage
+                        check = json.loads(response)
+                        new_message = False
 
                         try:
-                            if response_from_db['error']:
-                                response_from_db = json.dumps(response_from_db, indent=4)
-                                self.conn.sendall(bytes(str(response_from_db), 'ascii'))
-
+                            if check['new_message']:
+                                new_message = True
                         except KeyError:
-                            users_to_message = [user for user in response_from_db['users_in_channel']['users']]
+                            self.conn.sendall(bytes(str(response), 'ascii'))
+
+                        if new_message:
+                            users_to_notify = self.mydb.get_users_in_channel(check['new_message']['channel_receiving_message'])
+                            users_to_notify = json.loads(users_to_notify)
+
+                            try:
+                                if users_to_notify['error']:
+                                    users_to_notify = json.dumps(users_to_notify, indent=4)
+                                    self.conn.sendall(bytes(str(users_to_notify), 'ascii'))
+
+                            except KeyError:
+                                users_to_message = [user for user in users_to_notify['users_in_channel']['users']]
+
+                                for client_thread in my_threads:
+                                    if client_thread.server.user in users_to_message:
+                                        client_thread.conn.sendall(bytes(str(response), 'ascii'))
+
+                    elif operation == 'delete_channel':
+                        # Unload the JSON into a dictionary for usage
+                        check = json.loads(response)
+                        delete_channel = False
+
+                        try:
+                            if check['users_in_channel']:
+                                delete_channel = True
+                        except KeyError:
+                            self.conn.sendall(bytes(str(response), 'ascii'))
+
+                        if delete_channel:
+                            users_to_notify = check['users_in_channel']['users']
+
+                            response = json.dumps({
+                                "channel_deleted": "The channel `{}` has been deleted.".format(check['users_in_channel']['channel'])
+                            }, indent=4)
 
                             for client_thread in my_threads:
-                                print("test")
-                                if client_thread.server.user in users_to_message:
+                                if client_thread.server.user in users_to_notify:
                                     client_thread.conn.sendall(bytes(str(response), 'ascii'))
+
+                    else:
+                        self.conn.sendall(bytes(str(response), 'ascii'))
 
 
             #If an error occured

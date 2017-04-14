@@ -146,3 +146,8 @@ class Camelot_Server():
             return error
 
         return json.dumps(client_request, indent=4)
+
+    # Gets the channels that the specified user is a part of
+    @login_required
+    def get_channels_for_user(self, mydb, client_request):
+        return mydb.get_channels_for_user(self.user)

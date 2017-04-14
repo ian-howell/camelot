@@ -100,9 +100,9 @@ def create_channel_2():
         "create_channel": "TestChannel2"
     }, indent=4)
 
-def delete_channel():
+def delete_channel_1():
     return json.dumps({
-        "delete_channel": "some new channel name"
+        "delete_channel": "TestChannel1"
     }, indent=4)
 
 def delete_account():
@@ -145,6 +145,11 @@ def __init__():
 def logout():
     return json.dumps({
         "logout":"logout"
+    }, indent=4)
+
+def get_channels_for_user():
+    return json.dumps({
+        "get_channels_for_user": "get_channels_for_user"
     }, indent=4)
 
 client_lock = threading.Lock()
