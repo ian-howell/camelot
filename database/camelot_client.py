@@ -181,25 +181,10 @@ class ClientSendThread(threading.Thread):
         while connected:
             error = None
 
-            # Loops until the user selects a function to use
-            #while True:
             # Gets user input on the server function to be used
             client_request = input('Please enter a server function to use: (Type -h to get a list of server functions): \n')
 
-            '''
-            # Outputs the functions the client can use on the server
-            if client_request == '-h':
-                print('')
-                for func in functions.keys():
-                    print('- {}'.format(func))
-                print('')
-
-            else:
-                break
-            '''
-
             try:
-                #client_request = functions[client_request]()
                 client_request = globals()[client_request]()
             except:
                 error = 'Invalid function given\n'
@@ -212,22 +197,6 @@ class ClientSendThread(threading.Thread):
 
 
 if __name__ == '__main__':
-    '''
-    functions = {
-        'bad_json': bad_json,
-        'create_account': create_account,
-        'login': login,
-        'join_channel': join_channel,
-        'new_message': new_message,
-        'create_channel': create_channel,
-        'delete_channel': delete_channel,
-        'delete_account': delete_account,
-        'get_users_in_channel': get_users_in_channel,
-        'leave_channel': leave_channel,
-        'change_password': change_password
-    }
-    '''
-
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     soc.connect(("127.0.0.1", 12345))
 
@@ -248,36 +217,5 @@ if __name__ == '__main__':
     print('Closing client')
     soc.close()
 
-    '''
-    server = Camelot_Server()
-    mydb = Camelot_Database()
-    #mydb.insert_data('data.sql')
-
-    client_request = json.loads(test_bad_json())
-    #client_request = json.loads(create_account())
-    #client_request = json.loads(login())
-    #client_request = json.loads(join_channel())
-    #client_request = json.loads(new_message())
-    #client_request = json.loads(create_channel())
-    #client_request = json.loads(delete_channel())
-    #client_request = json.loads(delete_account())
-    #client_request = json.loads(get_users_in_channel())
-    #client_request = json.loads(leave_channel())
-    #client_request = json.loads(change_password())
-
-    for operation in client_request.keys():
-        try:
-            response = getattr(server, operation)(mydb, client_request)
-        except AttributeError:
-            response = json.dumps({
-                "error": "The JSON file sent didn't contain valid information."
-            }, indent=4)
-
-
-    # TODO ZW 3-20: Need to add a check that makes sure a client is only getting sent
-    # messages if the user is a part of the specified channel.
-    #response = json.dumps(client_request, indent=4)
-
     # TODO zw 4-1: Need to add a way to send a message to all users if a channel has
     # been deleted.
-    '''
