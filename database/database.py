@@ -231,21 +231,19 @@ class Camelot_Database():
                 "error": "The user trying to delete the channel isn't the admin of the channel."
             }, indent=4)
 
-        users_in_channel = json.loads(self.get_users_in_channel(channel_name))
-
         # If no errors occur, delete the channel
         cur.execute('''
         DELETE FROM "CHANNEL"
         WHERE channelid='{}'
         '''.format(channel_name))
 
-        if not users_in_channel['users_in_channel']['users']:
-            users_in_channel = json.dumps({
-                "success": "{} was successfully deleted. (No users found in channel as well).".format(channel_name)
-            }, indent=4)
-
         self.commit_and_close_connection(conn)
-        return json.dumps(users_in_channel, indent=4)
+        return json.dumps({
+            "channel_deleted": {
+                "channel": channel_name,
+                "message": "The channel `{}` has been deleted.".format(channel_name)
+            }
+        }, indent=4)
 
     ## Removes a user from the database
     #
@@ -262,6 +260,9 @@ class Camelot_Database():
         if error:
             return error
 
+        # Get the channels created by the user that will be deleted
+        channels = self.get_channels_user_has_created(username)
+
         # If no errors occur, delete the account
         cur.execute('''
         DELETE FROM "USER"
@@ -270,7 +271,10 @@ class Camelot_Database():
 
         self.commit_and_close_connection(conn)
         return json.dumps({
-            "success": "Successfully deleted account: '{}'.".format(username)
+            "account_deleted": {
+                "username": username,
+                "channels_being_deleted": channels
+            }
         }, indent=4)
 
     ## Gets all over the users in a specified channel
@@ -325,6 +329,7 @@ class Camelot_Database():
             self.commit_and_close_connection(conn)
             return error
 
+        # If the channel does exist, remove the user from the channel
         cur.execute('''
         DELETE FROM "CHANNELS_JOINED"
         WHERE channelid='{}' AND userid='{}'
@@ -332,7 +337,11 @@ class Camelot_Database():
 
         self.commit_and_close_connection(conn)
         return json.dumps({
-            "success": "{} successfully left the channel: '{}'.".format(user, channel_name)
+            "leave_channel":{
+                "channel": channel_name,
+                "user": user,
+                "message": "{} has left the channel.".format(user)
+             }
         }, indent=4)
 
     ## Allows the user to change their password
@@ -453,6 +462,7 @@ class Camelot_Database():
 
         self.commit_and_close_connection(conn)
 
+    # Gets the channels that the user is a part of
     def get_channels_for_user(self, username):
         conn = self.make_connection()
         cur = conn.cursor()
@@ -473,6 +483,24 @@ class Camelot_Database():
         return json.dumps({
             "channels": channels
         }, indent=4)
+
+    def get_channels_user_has_created(self, username):
+        conn = self.make_connection()
+        cur = conn.cursor()
+
+        cur.execute('''
+        SELECT channelid
+        FROM "CHANNEL"
+        WHERE admin='{}'
+        '''.format(username))
+        rows = cur.fetchall()
+
+        channels = []
+        for channel in rows:
+            channels.append(channel[0])
+
+        self.commit_and_close_connection(conn)
+        return channels
 
     ## Readies initial data for database
     #

@@ -3,6 +3,13 @@ import threading
 import json
 from server import Camelot_Server
 from database import Camelot_Database
+from time import sleep
+
+# NOTE: Sleep is used after making sending calls so that clients have time to process
+#       each send; this helps prevent multiple JSON objects from getting inadvertently
+#       sent at once. If more than one JSON object is in a package sent to the client,
+#       it will cause errors when unpacking the JSON information (or at least in python
+#       it will).
 
 
 my_clients = {}
@@ -33,6 +40,8 @@ class ClientThread(threading.Thread):
 
             # If a new package was recieved from the client (and no errors occured with the package)
             if not error:
+                # Grab the threads that have a user logged in
+                valid_threads = [thread for thread in my_threads if thread.server.user]
 
                 # Attempt to carry out the clients request
                 for operation in client_request.keys():
@@ -46,104 +55,98 @@ class ClientThread(threading.Thread):
                             "error": "The JSON file sent didn't contain valid information."
                         }, indent=4)
 
-                with client_lock:
+                if operation == 'new_message':
+                    # Unload the JSON into a dictionary for usage
+                    check = json.loads(response)
+                    new_message = False
 
-                    if operation == 'new_message':
-                        # Unload the JSON into a dictionary for usage
-                        check = json.loads(response)
-                        new_message = False
+                    try:
+                        if check['new_message']:
+                            new_message = True
+                    except KeyError:
+                        with client_lock:
+                            self.conn.sendall(bytes(str(response), 'ascii'))
+                            sleep(0.5)
+
+                    if new_message:
+                        users_to_notify = self.mydb.get_users_in_channel(check['new_message']['channel_receiving_message'])
+                        users_to_notify = json.loads(users_to_notify)
 
                         try:
-                            if check['new_message']:
-                                new_message = True
-                        except KeyError:
-                            self.conn.sendall(bytes(str(response), 'ascii'))
+                            if users_to_notify['error']:
+                                users_to_notify = json.dumps(users_to_notify, indent=4)
 
-                        if new_message:
-                            users_to_notify = self.mydb.get_users_in_channel(check['new_message']['channel_receiving_message'])
-                            users_to_notify = json.loads(users_to_notify)
-
-                            try:
-                                if users_to_notify['error']:
-                                    users_to_notify = json.dumps(users_to_notify, indent=4)
+                                with client_lock:
                                     self.conn.sendall(bytes(str(users_to_notify), 'ascii'))
+                                    sleep(0.5)
 
-                            except KeyError:
-                                users_to_message = [user for user in users_to_notify['users_in_channel']['users']]
-
-                                # Grab the threads that have a user logged in
-                                valid_threads = [thread for thread in my_threads if thread.server.user]
-
-                                for client_thread in valid_threads:
-                                    if client_thread.server.user in users_to_message:
-                                        client_thread.conn.sendall(bytes(str(response), 'ascii'))
-
-                    elif operation == 'delete_channel':
-                        # Unload the JSON into a dictionary for usage
-                        check = json.loads(response)
-                        delete_channel = False
-
-                        try:
-                            if check['users_in_channel']:
-                                delete_channel = True
                         except KeyError:
-                            self.conn.sendall(bytes(str(response), 'ascii'))
+                            users_to_message = [user for user in users_to_notify['users_in_channel']['users']]
 
-                        if delete_channel:
-                            users_to_notify = check['users_in_channel']['users']
-
-                            if users_to_notify:
-                                response = json.dumps({
-                                    "channel_deleted": "The channel `{}` has been deleted.".format(check['users_in_channel']['channel'])
-                                }, indent=4)
-
-                                # Grab the threads that have a user logged in
-                                valid_threads = [thread for thread in my_threads if thread.server.user]
-
-                                for client_thread in valid_threads:
-                                    if client_thread.server.user in users_to_notify:
-                                        client_thread.conn.sendall(bytes(str(response), 'ascii'))
-
-                    elif operation == 'create_channel':
-                        # Unload the JSON into a dictionary for usage
-                        check = json.loads(response)
-                        create_channel = False
-
-                        try:
-                            if check['channel_created']:
-                                create_channel = True
-                        except KeyError:
-                            self.conn.sendall(bytes(str(response), 'ascii'))
-
-                        if create_channel:
-                            # Grab the threads that have a user logged in
-                            valid_threads = [thread for thread in my_threads if thread.server.user]
-
-                            # Notify all users of the new channel created
                             for client_thread in valid_threads:
+                                if client_thread.server.user in users_to_message:
+                                    with client_lock:
+                                        client_thread.conn.sendall(bytes(str(response), 'ascii'))
+                                        sleep(0.5)
+
+                elif operation == 'delete_channel':
+                    # Unload the JSON into a dictionary for usage
+                    check = json.loads(response)
+                    delete_channel = False
+
+                    try:
+                        if check['channel_deleted']:
+                            delete_channel = True
+                    except KeyError:
+                        with client_lock:
+                            self.conn.sendall(bytes(str(response), 'ascii'))
+                            sleep(0.5)
+
+                    if delete_channel:
+                        for client_thread in valid_threads:
+                            with client_lock:
                                 client_thread.conn.sendall(bytes(str(response), 'ascii'))
+                                sleep(0.5)
 
-                    elif operation == 'join_channel':
-                        # Unload the JSON into a dictionary for usage
-                        check = json.loads(response)
-                        join_channel = False
+                elif operation == 'create_channel':
+                    # Unload the JSON into a dictionary for usage
+                    check = json.loads(response)
+                    create_channel = False
 
-                        try:
-                            if check['channels_joined']:
-                                join_channel = True
-                        except KeyError:
+                    try:
+                        if check['channel_created']:
+                            create_channel = True
+                    except KeyError:
+                        with client_lock:
                             self.conn.sendall(bytes(str(response), 'ascii'))
+                            sleep(0.5)
 
-                        if join_channel:
-                            # Grab the threads that have a user logged in
-                            valid_threads = [thread for thread in my_threads if thread.server.user]
+                    if create_channel:
+                        # Notify all users of the new channel created
+                        for client_thread in valid_threads:
+                            with client_lock:
+                                client_thread.conn.sendall(bytes(str(response), 'ascii'))
+                                sleep(0.5)
 
-                            print(check)
+                elif operation == 'join_channel':
+                    # Unload the JSON into a dictionary for usage
+                    check = json.loads(response)
+                    join_channel = False
 
-                            # Notify all users of the new channel created
-                            for client_thread in valid_threads:
-                                for channel in check['channels_joined']:
-                                    if not client_thread.mydb.check_username_in_channel(client_thread.server.user, channel):
+                    try:
+                        if check['channels_joined']:
+                            join_channel = True
+                    except KeyError:
+                        with client_lock:
+                            self.conn.sendall(bytes(str(response), 'ascii'))
+                            sleep(0.5)
+
+                    if join_channel:
+                        # Notify users who are in a specified channel of the new user who entered.
+                        for client_thread in valid_threads:
+                            for channel in check['channels_joined']:
+                                if not client_thread.mydb.check_username_in_channel(client_thread.server.user, channel):
+                                    with client_lock:
                                         client_thread.conn.sendall(bytes(str(json.dumps({
                                             "user_joined_channel": {
                                                 "message": "{} has joined the channel.".format(check['user']),
@@ -151,9 +154,81 @@ class ClientThread(threading.Thread):
                                                 "channel": channel
                                             }
                                         }, indent=4)), 'ascii'))
+                                        sleep(0.5)
 
-                    else:
+                elif operation == 'delete_account':
+                    # Unload the JSON into a dictionary for usage
+                    check = json.loads(response)
+                    delete_account = False
+
+                    try:
+                        if check['account_deleted']:
+                            delete_account = True
+                    except KeyError:
+                        with client_lock:
+                            self.conn.sendall(bytes(str(response), 'ascii'))
+                            sleep(0.5)
+
+                    if delete_account:
+                        # Check if someone is logged in under account being deleted.
+                        for client_thread in valid_threads:
+                            if client_thread.server.user == check['account_deleted']['username']:
+                                client_thread.server.user = None
+                                with client_lock:
+                                    client_thread.conn.sendall(bytes(str(json.dumps({
+                                        "account_deleted": "Your account has been deleted and you've been logged out."
+                                    }, indent=4)), 'ascii'))
+                                    sleep(0.5)
+
+                        channels_being_deleted = check['account_deleted']['channels_being_deleted']
+
+                        print(channels_being_deleted)
+
+                        # Notify all users that a channel has been deleted
+                        for channel in channels_being_deleted:
+                            for client_thread in valid_threads:
+                                with client_lock:
+                                    client_thread.conn.sendall(bytes(str(json.dumps({
+                                        "channel_deleted": {
+                                            "channel": channel,
+                                            "message": "The channel `{}` has been deleted.".format(channel)
+                                        }
+                                    }, indent=4)), 'ascii'))
+                                    sleep(0.5)
+
+                elif operation == 'leave_channel':
+                    # Unload the JSON into a dictionary for usage
+                    check = json.loads(response)
+                    leave_channel = False
+
+                    try:
+                        if check['leave_channel']:
+                            leave_channel = True
+                    except KeyError:
+                        with client_lock:
+                            self.conn.sendall(bytes(str(response), 'ascii'))
+                            sleep(0.5)
+
+                    if leave_channel:
+                        # Notify all users in the specified channel that the specified user has left said channel.
+                        for client_thread in valid_threads:
+                            if (not client_thread.mydb.check_username_in_channel(client_thread.server.user, check['leave_channel']['channel']) and
+                            client_thread.server.user != check['leave_channel']['user']):
+                                with client_lock:
+                                    client_thread.conn.sendall(bytes(str(response), 'ascii'))
+                                    sleep(0.5)
+
+                        with client_lock:
+                            self.conn.sendall(bytes(str(json.dumps({
+                                "success": "You have successfully left the channel: `{}`".format(check['leave_channel']['channel'])
+                            }, indent=4)), 'ascii'))
+                            sleep(0.5)
+
+
+                else:
+                    with client_lock:
                         self.conn.sendall(bytes(str(response), 'ascii'))
+                        sleep(0.5)
 
             #If an error occured
             else:
@@ -161,6 +236,7 @@ class ClientThread(threading.Thread):
 
                 try:
                     self.conn.sendall(bytes(str(client_request), 'ascii'))
+                    sleep(0.5)
 
                 except BrokenPipeError:
                     print("{} disconnected.".format(thread_name))
@@ -175,7 +251,7 @@ class ClientThread(threading.Thread):
 
         try:
             # Receive the data from that socket
-            request = json.loads(self.conn.recv(1024).decode('ascii'))
+            request = json.loads(self.conn.recv(4096).decode('ascii'))
             print("Received `{}` from `{}`".format(json.dumps(request), thread_name))
 
         except:
@@ -221,6 +297,7 @@ if __name__ == '__main__':
                 "connection": "Broke"
             }, indent=4)
             client.sendall(bytes(str(client_request), 'ascii'))
+            sleep(0.5)
         client_lock.release()
 
     soc.close()

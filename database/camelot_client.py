@@ -1,6 +1,8 @@
 import socket
 import json
 import threading
+from time import sleep
+
 
 ############ GENERAL NOTES ##############
 # 'json.dumps' encodes the data into json
@@ -170,7 +172,7 @@ def get_channels_for_user():
         "get_channels_for_user": "get_channels_for_user"
     }, indent=4)
 
-client_lock = threading.Lock()
+#client_recv_lock = threading.Lock()
 server_running = True
 
 class ClientRecvThread(threading.Thread):
@@ -182,8 +184,9 @@ class ClientRecvThread(threading.Thread):
         global server_running
 
         while True:
+            #with client_recv_lock:
             result_bytes = soc.recv(4096) # the number means how the response can be in bytes
-            result_string = json.loads(result_bytes.decode("ascii")) # the return will be in bytes, so decode
+            result_string = json.loads(result_bytes.decode('ascii')) # the return will be in bytes, so decode
 
             try:
                 if result_string['connection'] == 'Broke':
@@ -205,7 +208,7 @@ class ClientSendThread(threading.Thread):
             error = None
 
             # Gets user input on the server function to be used
-            client_request = input('Please enter a server function to use: (Type -h to get a list of server functions): \n')
+            client_request = input('Please enter a server function to use: \n')
 
             try:
                 client_request = globals()[client_request]()
@@ -215,8 +218,8 @@ class ClientSendThread(threading.Thread):
             if error:
                 print(error)
             else:
-                with client_lock:
-                    soc.send(client_request.encode("ascii")) # we must encode the string to bytes
+                self.soc.sendall(client_request.encode("ascii")) # we must encode the string to bytes
+                sleep(0.5)
 
 
 if __name__ == '__main__':
@@ -239,6 +242,3 @@ if __name__ == '__main__':
 
     print('Closing client')
     soc.close()
-
-    # TODO zw 4-1: Need to add a way to send a message to all users if a channel has
-    # been deleted.
