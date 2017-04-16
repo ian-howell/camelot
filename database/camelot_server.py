@@ -170,19 +170,22 @@ class ClientThread(threading.Thread):
                             sleep(0.5)
 
                     if delete_account:
+                        # Send the user who deleted the account a message
+                        self.conn.sendall(bytes(str(json.dumps({
+                            "success": "Your account has been deleted."
+                        }, indent=4)), 'ascii'))
+
                         # Check if someone is logged in under account being deleted.
                         for client_thread in valid_threads:
                             if client_thread.server.user == check['account_deleted']['username']:
                                 client_thread.server.user = None
                                 with client_lock:
                                     client_thread.conn.sendall(bytes(str(json.dumps({
-                                        "account_deleted": "Your account has been deleted and you've been logged out."
+                                        "account_deleted": "You've been logged out due to your account being deleted."
                                     }, indent=4)), 'ascii'))
                                     sleep(0.5)
 
                         channels_being_deleted = check['account_deleted']['channels_being_deleted']
-
-                        print(channels_being_deleted)
 
                         # Notify all users that a channel has been deleted
                         for channel in channels_being_deleted:

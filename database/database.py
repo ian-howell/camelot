@@ -56,6 +56,19 @@ class Camelot_Database():
 
         # If no errors occured, create the account
         cur.execute('''INSERT INTO "USER" VALUES ('{}', '{}')'''.format(username, password))
+        conn.commit()
+
+        # And then add the default channels to the user's channels
+        cur.execute('''
+        SELECT channelid
+        FROM "CHANNEL"
+        WHERE admin IS NULL
+        ''')
+        rows = cur.fetchall()
+
+        for channel in rows:
+            self.add_channels_to_user_info(username, channel)
+
         self.commit_and_close_connection(conn)
         return json.dumps({
             "success": "Successfully created {}'s account.".format(username)

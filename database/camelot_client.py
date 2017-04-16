@@ -172,7 +172,6 @@ def get_channels_for_user():
         "get_channels_for_user": "get_channels_for_user"
     }, indent=4)
 
-#client_recv_lock = threading.Lock()
 server_running = True
 
 class ClientRecvThread(threading.Thread):
@@ -184,7 +183,6 @@ class ClientRecvThread(threading.Thread):
         global server_running
 
         while True:
-            #with client_recv_lock:
             result_bytes = soc.recv(4096) # the number means how the response can be in bytes
             result_string = json.loads(result_bytes.decode('ascii')) # the return will be in bytes, so decode
 
