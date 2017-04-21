@@ -213,7 +213,10 @@ class Camelot_Database():
 
         self.commit_and_close_connection(conn)
         return json.dumps({
-            "channel_created": "A new channel has been created: '{}'.".format(channel_name)
+            "channel_created": {
+                "channel": channel_name,
+                "message": "A new channel has been created: '{}'.".format(channel_name)
+            }
         }, indent=4)
 
     ## Removes a channel from the database

@@ -124,6 +124,41 @@ def test_create_account_success():
     assert expected_response == result
     mydb.empty_tables()
 
+def test_create_account_success_with_default_channels_added_to_account():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+    mydb.insert_data('data.sql')
+
+    expected_response = json.dumps({
+        "channels": ["Server Team", "Client Team", "Software Eng. Group"]
+    }, indent=4)
+
+    mydb.create_account("username", "password")
+    result = mydb.get_channels_for_user("username")
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_get_channels_for_user():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+    mydb.insert_data('data.sql')
+
+    client_request = json.dumps({
+        "get_channels_for_user": "get_channels_for_user"
+    }, indent=4)
+
+    expected_response = json.dumps({
+        "channels": ["Server Team", "Client Team", "Software Eng. Group"]
+    }, indent=4)
+
+    mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, 'username', 'password')
+    result = server.get_channels_for_user(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
 def test_login_invalid_json():
     server = Camelot_Server()
     mydb = Camelot_Database()
@@ -283,6 +318,31 @@ def test_new_message_user_cant_send_message_to_channel_theyre_not_in():
     assert expected_response == result
     mydb.empty_tables()
 
+def test_new_message_send_message_to_channel_that_doesnt_exist():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "new_message": {
+            "channel_receiving_message": "dummy channel",
+            "user": "username",
+            "timestamp": "2017-03-14 14:11:30",
+            "message": "the actual message that the user posted"
+        }
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The specified channel was not found."
+    }, indent=4)
+
+    mydb.create_account('username', 'password')
+    server, mydb = login(server, mydb, 'username', 'password')
+
+    result = server.new_message(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
 def test_new_message_success():
     server = Camelot_Server()
     mydb = Camelot_Database()
@@ -382,6 +442,52 @@ def test_join_channel_that_doesnt_exist():
     assert expected_response == result
     mydb.empty_tables()
 
+def test_join_channel_trying_to_join_channel_that_you_are_already_a_part_of():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "join_channel": [
+            "Client Team",
+            "Server Team"
+        ]
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "The user has already joined one or more of the channels they were trying to join again."
+    })
+
+    mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, "username", "password")
+    mydb.create_channel("Client Team", "username")
+    mydb.create_channel("Server Team", "username")
+    server.join_channel(mydb, client_request)
+    result = server.join_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
+def test_join_channel_user_tries_to_send_json_containing_zero_channels_to_join():
+    server = Camelot_Server()
+    mydb = Camelot_Database()
+
+    client_request = json.loads(json.dumps({
+        "join_channel": []
+    }, indent=4))
+
+    expected_response = json.dumps({
+        "error": "No channels were given for the user to join."
+    }, indent=4)
+
+    mydb.create_account("username", "password")
+    server, mydb = login(server, mydb, "username", "password")
+    mydb.create_channel("Client Team", "username")
+    mydb.create_channel("Server Team", "username")
+    result = server.join_channel(mydb, client_request)
+
+    assert expected_response == result
+    mydb.empty_tables()
+
 def test_join_channel_success():
     server = Camelot_Server()
     mydb = Camelot_Database()
@@ -394,11 +500,12 @@ def test_join_channel_success():
     }, indent=4))
 
     expected_response = json.dumps({
-        "succes": "Successfully joined channels: ['Client Team', 'Server Team']."
+        "channels_joined": ["Client Team", "Server Team"],
+        "user": "username"
     }, indent=4)
 
     mydb.create_account("username", "password")
-    server, mydb = login(server, mydb, 'username', 'password')
+    server, mydb = login(server, mydb, "username", "password")
     mydb.create_channel("Client Team", "username")
     mydb.create_channel("Server Team", "username")
     result = server.join_channel(mydb, client_request)
@@ -473,7 +580,10 @@ def test_create_channel_success():
     }, indent=4))
 
     expected_response = json.dumps({
-        "success": "Successfully created channel: 'Test Channel Name'."
+        "channel_created": {
+            "channel": "Test Channel Name",
+            "message": "A new channel has been created: 'Test Channel Name'."
+        }
     }, indent=4)
 
     mydb.create_account("username", "password")
@@ -553,7 +663,10 @@ def test_delete_channel_success():
     }, indent=4))
 
     expected_response = json.dumps({
-        "success": "Successfully deleted channel: 'TestChannel'."
+        "channel_deleted": {
+            "channel": "TestChannel",
+            "message": "The channel `TestChannel` has been deleted."
+        }
     }, indent=4)
 
     mydb.create_account("username", "password")
@@ -617,10 +730,14 @@ def test_delete_account_success():
     }, indent=4))
 
     expected_response = json.dumps({
-        "success": "Successfully deleted account: 'username'."
+        "account_deleted": {
+            "username": "username",
+            "channels_being_deleted": ["TestChannel"]
+        }
     }, indent=4)
 
     mydb.create_account("username", "password")
+    mydb.create_channel("TestChannel", "username")
     result = server.delete_account(mydb, client_request)
 
     assert expected_response == result
@@ -739,7 +856,11 @@ def test_leave_channel_success():
     }, indent=4))
 
     expected_response = json.dumps({
-        "success": "username successfully left the channel: 'Client Team'."
+        "leave_channel":{
+            "channel": "Client Team",
+            "user": "username",
+            "message": "username has left the channel."
+         }
     }, indent=4)
 
     mydb.create_account("username", "password")
