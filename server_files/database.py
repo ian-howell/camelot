@@ -20,7 +20,7 @@ class Camelot_Database():
     #  @return The connection object
     def make_connection(self):
         try:
-            conn = psycopg2.connect("dbname='camelot' host='localhost'")
+            conn = psycopg2.connect("dbname='camelot' host='localhost' user='cs3100' password='camelot'")
         except:
             exit("Unable to connect to the database")
 

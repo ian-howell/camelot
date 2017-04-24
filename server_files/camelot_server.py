@@ -271,7 +271,7 @@ class ClientThread(threading.Thread):
 if __name__ == '__main__':
     # Add some initial channels to the database
     mydb = Camelot_Database()
-    mydb.insert_data('data.sql')
+    #mydb.insert_data('data.sql')
 
     # Host/Port info for raspberry pi
     host = '192.168.1.5'
