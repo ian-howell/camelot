@@ -172,6 +172,57 @@ def get_channels_for_user():
         "get_channels_for_user": "get_channels_for_user"
     }, indent=4)
 
+def create_dummy_channel():
+    return json.dumps({
+        "create_channel": "Client Team 40 characters max length 123"
+    }, indent=4)
+
+def join_dummy_channel():
+    return json.dumps({
+        "join_channel": [
+            "Client Team 40 characters max length 123"
+        ]
+    }, indent=4)
+
+def delete_dummy_channel():
+    return json.dumps({
+        "delete_channel": "Client Team 40 characters max length 123"
+    }, indent=4)
+
+def message_length_test(): # with 256 character limit
+    return json.dumps({
+        "new_message": {
+            "channel_receiving_message": "Client Team 40 characters max length 123",
+            "user": "",
+            "timestamp": "2017-03-14 14:11:30",
+            "message": "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo " +
+                       "ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient " +
+                       "montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis,."
+        }
+    }, indent=4)
+
+def message_too_long_test(): # with 256 character limit
+    return json.dumps({
+        "new_message": {
+            "channel_receiving_message": "Client Team 40 characters max length 123",
+            "user": "",
+            "timestamp": "2017-03-14 14:11:30",
+            "message": "this message is too long --------------------------------------------------------------" +
+                       "this message is too long --------------------------------------------------------------" +
+                       "this message is too long --------------------------------------------------------------" +
+                       "this message is too long --------------------------------------------------------------" +
+                       "this message is too long --------------------------------------------------------------" +
+                       "this message is too long --------------------------------------------------------------" +
+                       "this message is too long --------------------------------------------------------------" +
+                       "this message is too long --------------------------------------------------------------" +
+                       "this message is too long --------------------------------------------------------------" +
+                       "this message is too long --------------------------------------------------------------" +
+                       "this message is too long --------------------------------------------------------------" +
+                       "this message is too long --------------------------------------------------------------" +
+                       "this message is too long --------------------------------------------------------------"
+        }
+    }, indent=4)
+
 server_running = True
 
 class ClientRecvThread(threading.Thread):
