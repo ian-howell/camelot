@@ -81,10 +81,6 @@ class ClientThread(threading.Thread):
                                     sleep(0.5)
 
                         except KeyError:
-                            ###########
-                            print(users_to_notify)
-                            ###########
-
                             users_to_message = [user for user in users_to_notify['users_in_channel']['users']]
 
                             for client_thread in valid_threads:
