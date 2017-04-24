@@ -222,7 +222,12 @@ class ClientSendThread(threading.Thread):
 
 if __name__ == '__main__':
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    soc.connect(("127.0.0.1", 12345))
+
+    # Host/Port info for raspberry pi
+    host = '64.251.141.132'
+    port = 9005
+
+    soc.connect((host, port))
 
     send_thread = ClientSendThread(soc)
     send_thread.daemon = True

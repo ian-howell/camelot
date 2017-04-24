@@ -260,7 +260,10 @@ class ClientThread(threading.Thread):
         except:
             error = True
             request = json.dumps({
-                "error": "Something went wrong"
+                "error": "Something went wrong with unpacking the JSON message. This could mean you sent an incomplete JSON" +
+                         " object or more than one JSON object in one package. Most likely your message was too long or your" +
+                         " send function is sending a large enough amount of data at once. Also make sure messages are encoded" +
+                         " to ascii before being sent."
                 }, indent=4)
 
         return (error, request)
@@ -270,8 +273,9 @@ if __name__ == '__main__':
     mydb = Camelot_Database()
     mydb.insert_data('data.sql')
 
-    host = '127.0.0.1'
-    port = 12345
+    # Host/Port info for raspberry pi
+    host = '192.168.1.5'
+    port = 9005
 
     soc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
