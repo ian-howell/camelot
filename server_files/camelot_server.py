@@ -271,6 +271,9 @@ class ClientThread(threading.Thread):
 if __name__ == '__main__':
     # Add some initial channels to the database
     mydb = Camelot_Database()
+    
+    # Commented out because tables are already inserted and the commands inside
+    # the file aren't supported by the raspberry pi's version of postgresql.
     #mydb.insert_data('data.sql')
 
     # Host/Port info for raspberry pi
