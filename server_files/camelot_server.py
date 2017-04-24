@@ -81,6 +81,10 @@ class ClientThread(threading.Thread):
                                     sleep(0.5)
 
                         except KeyError:
+                            ###########
+                            print(users_to_notify)
+                            ###########
+
                             users_to_message = [user for user in users_to_notify['users_in_channel']['users']]
 
                             for client_thread in valid_threads:
@@ -260,10 +264,7 @@ class ClientThread(threading.Thread):
         except:
             error = True
             request = json.dumps({
-                "error": "Something went wrong with unpacking the JSON message. This could mean you sent an incomplete JSON" +
-                         " object or more than one JSON object in one package. Most likely your message was too long or your" +
-                         " send function is sending a large enough amount of data at once. Also make sure messages are encoded" +
-                         " to ascii before being sent."
+                "error": "Something went wrong with unpacking the JSON message."
                 }, indent=4)
 
         return (error, request)
@@ -271,7 +272,7 @@ class ClientThread(threading.Thread):
 if __name__ == '__main__':
     # Add some initial channels to the database
     mydb = Camelot_Database()
-    
+
     # Commented out because tables are already inserted and the commands inside
     # the file aren't supported by the raspberry pi's version of postgresql.
     #mydb.insert_data('data.sql')
