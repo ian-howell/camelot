@@ -13,7 +13,7 @@ from time import sleep
 
 
 my_clients = {}
-my_threads = []
+my_threads = set()
 client_lock = threading.Lock()
 
 class ClientThread(threading.Thread):
@@ -244,6 +244,7 @@ class ClientThread(threading.Thread):
                 except BrokenPipeError:
                     print("{} disconnected.".format(thread_name))
                     my_clients.pop(self.addr)
+                    my_threads.remove(cur_thread)
                     client_lock.release()
                     return None
 
@@ -293,7 +294,7 @@ if __name__ == '__main__':
             print('Got a new connection from {}'.format(addr))
             new_client_thread = ClientThread(client_socket, addr)
             new_client_thread.daemon = True
-            my_threads.append(new_client_thread)
+            my_threads.add(new_client_thread)
             new_client_thread.start()
 
     except KeyboardInterrupt:
