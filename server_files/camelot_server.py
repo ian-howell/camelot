@@ -50,7 +50,7 @@ class ClientThread(threading.Thread):
                             raise AttributeError
                         with client_lock:
                             response = getattr(self.server, operation)(self.mydb, client_request)
-                    except AttributeError:
+                    except:
                         response = json.dumps({
                             "error": "The JSON file sent didn't contain valid information."
                         }, indent=4)
